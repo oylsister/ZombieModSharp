@@ -31,10 +31,10 @@ public class HitGroup : IHitGroup
             var lines = jsonContent.Split('\n');
             var cleanedLines = lines.Select(line => 
             {
-                var commentIndex = line.IndexOf("//");
+                var commentIndex = line.IndexOf("//", StringComparison.Ordinal);
                 return commentIndex >= 0 ? line.Substring(0, commentIndex) : line;
             });
-            var cleanedJson = string.Join('\n', cleanedLines);
+            var cleanedJson = string.Join("\n", cleanedLines);
 
             hitgroupConfig = JsonSerializer.Deserialize<Dictionary<string, float>>(cleanedJson) ?? [];
 
