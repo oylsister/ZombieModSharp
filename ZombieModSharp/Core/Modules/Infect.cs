@@ -383,7 +383,7 @@ public class Infect : IInfect
         if (ctCount <= 0 && tCount > 0)
         {
             InfectStarted = false;
-            _modSharp.GetGameRules().TerminateRound(4.0f, RoundEndReason.TerroristsWin);
+            _modSharp.GetGameRules().TerminateRound(8.0f, RoundEndReason.TerroristsWin);
             var zombieOverlay = _cvarServices.CvarList["Cvar_InfectZombieWinOverlay"]?.GetString() ?? "";
             var team = _entityManager.GetGlobalCStrikeTeam(CStrikeTeam.TE);
             team?.Score += 1;
@@ -413,7 +413,7 @@ public class Infect : IInfect
         else if (tCount <= 0 && ctCount > 0)
         {
             InfectStarted = false;
-            _modSharp.GetGameRules().TerminateRound(4.0f, RoundEndReason.CTsWin);
+            _modSharp.GetGameRules().TerminateRound(8.0f, RoundEndReason.CTsWin);
             var humanOverlay = _cvarServices.CvarList["Cvar_InfectHumanWinOverlay"]?.GetString() ?? "";
             var team = _entityManager.GetGlobalCStrikeTeam(CStrikeTeam.CT);
             team?.Score += 1;
