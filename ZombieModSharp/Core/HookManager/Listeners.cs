@@ -8,8 +8,6 @@ using Sharp.Shared.Managers;
 using Sharp.Shared.Objects;
 using Sharp.Shared.Types;
 using ZombieModSharp.Abstractions;
-using ZombieModSharp.Abstractions.Entities;
-using ZombieModSharp.Abstractions.Storage;
 using ZombieModSharp.Core.Modules;
 
 namespace ZombieModSharp.Core.HookManager;
@@ -27,7 +25,6 @@ public class Listeners : IListeners, IClientListener, IGameListener, IEntityList
     private readonly ISharedSystem _sharedSystem;
     private readonly ILogger<Listeners> _logger;
     private readonly IModSharp _modsharp;
-    private readonly ISqliteDatabase _sqlite;
     private readonly ICvarServices _cvarServices;
     private readonly IPlayerClasses _playerClasses;
     private readonly IPrecacheManager _precacheManager;
@@ -39,13 +36,12 @@ public class Listeners : IListeners, IClientListener, IGameListener, IEntityList
     private readonly IGlowServices _glowServices;
     private readonly ILeaderServices _leaderServices;
 
-    public Listeners(IPlayerManager playerManager, ISharedSystem sharedSystem, ISqliteDatabase sqlite, ICvarServices cvarServices, IPlayerClasses playerClasses, IPrecacheManager precacheManager, IRespawnServices respawnServices, IWeapons weapons, IGrenadeEffect grenadeEffect, IMarkerServices markerServices, ILeaderServices leaderServices, IGlowServices glowServices)
+    public Listeners(IPlayerManager playerManager, ISharedSystem sharedSystem, ICvarServices cvarServices, IPlayerClasses playerClasses, IPrecacheManager precacheManager, IRespawnServices respawnServices, IWeapons weapons, IGrenadeEffect grenadeEffect, IMarkerServices markerServices, ILeaderServices leaderServices, IGlowServices glowServices)
     {
         _playerManager = playerManager;
         _sharedSystem = sharedSystem;
         _logger = _sharedSystem.GetLoggerFactory().CreateLogger<Listeners>();
         _modsharp = _sharedSystem.GetModSharp();
-        _sqlite = sqlite;
         _cvarServices = cvarServices;
         _playerClasses = playerClasses;
         _precacheManager = precacheManager;
@@ -92,53 +88,7 @@ public class Listeners : IListeners, IClientListener, IGameListener, IEntityList
         if (client.IsHltv)
             return;
 
-        var id = client.SteamId.ToString();
-
-        string humanClass = string.Empty;
-        string zombieClass = string.Empty;
-
-        _modsharp.InvokeFrameActionAsync(async () => 
-        {
-            // this is the part of Player classes
-            var classes = await _sqlite.GetPlayerClassesAsync(id);
-
-            if (classes == null)
-            {
-                // _logger.LogInformation("Found nothing.");
-
-                humanClass = _cvarServices.CvarList["Cvar_HumanDefault"]!.GetString();
-                zombieClass = _cvarServices.CvarList["Cvar_ZombieDefault"]!.GetString();
-
-                // _logger.LogInformation("Try insert {human} | {zombie}", humanClass, zombieClass);
-
-                var insertResult = await _sqlite.InsertPlayerClassesAsync(id, humanClass, zombieClass);
-                //_logger.LogInformation("Insert result for {SteamId}: {Result}", id, insertResult);
-            }
-            else
-            {
-                humanClass = classes.HumanClass;
-                zombieClass = classes.ZombieClass;
-
-                // _logger.LogInformation("Found {human} | {zombie}", classes.HumanClass, classes.ZombieClass);
-            }
-
-            var player = _playerManager.GetOrCreatePlayer(client);
-
-            player.HumanClass = _playerClasses.GetClassByName(humanClass);
-            player.ZombieClass = _playerClasses.GetClassByName(zombieClass);
-
-            // this is sound part
-            var sound = await _sqlite.GetPlayerSoundAsync(id);
-
-            if(sound == null)
-            {
-                sound = new SavedSound();
-                await _sqlite.InsertPlayerSoundAsync(id, true);
-            }
-
-            player.SoundEnabled = sound.Enabled;
-            player.SoundVolume = sound.Volume;
-        });
+        _playerManager.GetOrCreatePlayer(client);
     }
 
     public void OnClientDisconnecting(IGameClient client, NetworkDisconnectionReason reason)
