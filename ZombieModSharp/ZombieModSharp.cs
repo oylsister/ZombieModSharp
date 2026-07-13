@@ -5,15 +5,15 @@ using Microsoft.Extensions.Logging;
 using Sharp.Extensions.CommandManager;
 using Sharp.Extensions.GameEventManager;
 using Sharp.Modules.AdminManager.Shared;
+using Sharp.Modules.ClientPreferences.Shared;
 using Sharp.Modules.MenuManager.Shared;
 using Sharp.Shared;
 using Sharp.Shared.Abstractions;
 using Sharp.Shared.Managers;
+using Sharp.Shared.Objects;
 using ZombieModSharp.Abstractions;
-using ZombieModSharp.Abstractions.Storage;
 using ZombieModSharp.Core.Services;
 using ZombieModSharp.Shared;
-using ZombieModSharp.Storage;
 
 namespace ZombieModSharp;
 
@@ -34,14 +34,20 @@ public sealed class ZombieModSharp : IModSharpModule
     private readonly ICommand _command;
     private readonly IHooks _hooks;
     private readonly IConfigs _configs;
-    private readonly ISqliteDatabase _sqliteDatabase;
     private readonly ICvarServices _cvarServices;
     private readonly IInfect _infect;
     private readonly ILeaderServices _leaderServices;
     private readonly ISharpModuleManager  _modules;
     private readonly IPlayerClasses _playerClasses;
+    private readonly IPlayerManager _playerManager;
+    private IModSharpModuleInterface<IClientPreference>? _clientPreference;
+    private IDisposable? _clientPreferenceLoadSubscription;
 
     public static string Prefix { get; } = " \x04[Z:MS]\x01";
+    internal const string HumanClassCookieKey = "ZombieModSharp.HumanClass";
+    internal const string ZombieClassCookieKey = "ZombieModSharp.ZombieClass";
+    internal const string SoundEnabledCookieKey = "ZombieModSharp.SoundEnabled";
+    internal const string SoundVolumeCookieKey = "ZombieModSharp.SoundVolume";
     private const string AdminManagerAssemblyName = "Sharp.Modules.AdminManager";
 
     public ZombieModSharp(ISharedSystem sharedSystem,
@@ -72,11 +78,6 @@ public sealed class ZombieModSharp : IModSharpModule
         services.AddSingleton(_sharedSystem.GetModSharp());
         services.AddSingleton(_sharedSystem.GetClientManager());
 
-        // Register SqliteDatabase with proper factory
-        var path = Path.Combine(sharpPath, "data", "ZombieModSharp.db");
-        services.AddSingleton<ISqliteDatabase>(provider => 
-            new SqliteDatabase($"Data Source={path}", provider.GetRequiredService<ILogger<SqliteDatabase>>()));
-        
         services.AddCommandManager(sharedSystem);
         services.AddGameEventManager(sharedSystem);
 
@@ -88,7 +89,6 @@ public sealed class ZombieModSharp : IModSharpModule
         _serviceProvider = services.BuildServiceProvider();
 
         // Get services from DI container instead of manual instantiation
-        _sqliteDatabase = _serviceProvider.GetRequiredService<ISqliteDatabase>();
         _eventListener = _serviceProvider.GetRequiredService<IEvents>();
         _listeners = _serviceProvider.GetRequiredService<IListeners>();
         _command = _serviceProvider.GetRequiredService<ICommand>();
@@ -98,6 +98,7 @@ public sealed class ZombieModSharp : IModSharpModule
         _infect = _serviceProvider.GetRequiredService<IInfect>();
         _leaderServices = _serviceProvider.GetRequiredService<ILeaderServices>();
         _playerClasses = _serviceProvider.GetRequiredService<IPlayerClasses>();
+        _playerManager = _serviceProvider.GetRequiredService<IPlayerManager>();
     }
 
     public bool Init()
@@ -117,9 +118,6 @@ public sealed class ZombieModSharp : IModSharpModule
         var _gamedata = _sharedSystem.GetModSharp().GetGameData();
         _gamedata.Register("ZombieModSharp.jsonc");
 
-        var modsharp = _sharedSystem.GetModSharp();
-        modsharp.InvokeFrameActionAsync(async () => await _sqliteDatabase.Init());
-
         return true;
     }
 
@@ -131,7 +129,7 @@ public sealed class ZombieModSharp : IModSharpModule
         // _logger.LogInformation("See you around, Nameless~ Try to stay out of trouble, especially... the next time we meet!");
         _listeners.Shutdown();
         _hooks.Shutdown();
-        _sqliteDatabase.Shutdown();
+        _clientPreferenceLoadSubscription?.Dispose();
         _cvarServices.Shutdown();
     }
 
@@ -149,6 +147,54 @@ public sealed class ZombieModSharp : IModSharpModule
         TryResolveAdminManager();
         _menuManager = _sharedSystem.GetSharpModuleManager().GetOptionalSharpModuleInterface<IMenuManager>(IMenuManager.Identity);
         _playerClasses.GetMenuManager(_menuManager);
+        _clientPreference = _modules.GetRequiredSharpModuleInterface<IClientPreference>(IClientPreference.Identity);
+        _clientPreferenceLoadSubscription = _clientPreference.Instance!.ListenOnLoad(OnClientPreferencesLoaded);
+    }
+
+    private void OnClientPreferencesLoaded(IGameClient client)
+    {
+        if (client.IsFakeClient || client.IsHltv)
+            return;
+
+        var preferences = _clientPreference!.Instance!;
+        var humanClassName = preferences.GetCookie(client.SteamId, HumanClassCookieKey)?.GetString();
+        var zombieClassName = preferences.GetCookie(client.SteamId, ZombieClassCookieKey)?.GetString();
+        var soundEnabledText = preferences.GetCookie(client.SteamId, SoundEnabledCookieKey)?.GetString();
+        var soundVolumeText = preferences.GetCookie(client.SteamId, SoundVolumeCookieKey)?.GetString();
+
+        var humanClass = _playerClasses.GetClassByName(humanClassName ?? string.Empty);
+        if (humanClass == null)
+        {
+            humanClassName = _cvarServices.CvarList["Cvar_HumanDefault"]!.GetString();
+            humanClass = _playerClasses.GetClassByName(humanClassName);
+            preferences.SetCookie(client.SteamId, HumanClassCookieKey, humanClassName);
+        }
+
+        var zombieClass = _playerClasses.GetClassByName(zombieClassName ?? string.Empty);
+        if (zombieClass == null)
+        {
+            zombieClassName = _cvarServices.CvarList["Cvar_ZombieDefault"]!.GetString();
+            zombieClass = _playerClasses.GetClassByName(zombieClassName);
+            preferences.SetCookie(client.SteamId, ZombieClassCookieKey, zombieClassName);
+        }
+
+        if (!bool.TryParse(soundEnabledText, out var soundEnabled))
+        {
+            soundEnabled = true;
+            preferences.SetCookie(client.SteamId, SoundEnabledCookieKey, bool.TrueString);
+        }
+
+        if (!int.TryParse(soundVolumeText, out var soundVolume) || soundVolume is < 0 or > 100)
+        {
+            soundVolume = 100;
+            preferences.SetCookie(client.SteamId, SoundVolumeCookieKey, "100");
+        }
+
+        var player = _playerManager.GetOrCreatePlayer(client);
+        player.HumanClass = humanClass;
+        player.ZombieClass = zombieClass;
+        player.SoundEnabled = soundEnabled;
+        player.SoundVolume = soundVolume;
     }
 
     public void OnLibraryConnected(string name)

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
+using Sharp.Modules.ClientPreferences.Shared;
 using Sharp.Modules.MenuManager.Shared;
 using Sharp.Shared;
 using Sharp.Shared.Enums;
@@ -7,7 +8,6 @@ using Sharp.Shared.GameEntities;
 using Sharp.Shared.Objects;
 using Sharp.Shared.Types;
 using ZombieModSharp.Abstractions;
-using ZombieModSharp.Abstractions.Storage;
 
 namespace ZombieModSharp.Core.Modules;
 
@@ -31,16 +31,14 @@ public class PlayerClasses : IPlayerClasses
     private readonly ILogger<PlayerClasses> _logger;
     private readonly IPlayerManager _playerManager;
     private readonly IModSharp _modSharp;
-    private readonly ISqliteDatabase _sqlite;
     private IMenuManager? _menuManager;
 
-    public PlayerClasses(ISharedSystem sharedSystem, IPlayerManager playerManager, ISqliteDatabase sqliteDatabase)
+    public PlayerClasses(ISharedSystem sharedSystem, IPlayerManager playerManager)
     {
         _sharedSystem = sharedSystem;
         _logger = _sharedSystem.GetLoggerFactory().CreateLogger<PlayerClasses>();
         _playerManager = playerManager;
         _modSharp = _sharedSystem.GetModSharp();
-        _sqlite = sqliteDatabase;
     }
 
     public Dictionary<string, ClassAttribute> classesData = [];
@@ -127,17 +125,22 @@ public class PlayerClasses : IPlayerClasses
 
             menu.AddItem(_ => classValue.Name, controller => 
             {
+                var preferences = _sharedSystem.GetSharpModuleManager()
+                                               .GetRequiredSharpModuleInterface<IClientPreference>(IClientPreference.Identity)
+                                               .Instance!;
                 if (isZombie)
                 {
                     player.ZombieClass = classValue;
                     var humanClassKey = classesData.FirstOrDefault(c => c.Value == player.HumanClass).Key;
-                    _sqlite.InsertPlayerClassesAsync(client.SteamId.ToString(), humanClassKey, classObject.Key);
+                    preferences.SetCookie(client.SteamId, global::ZombieModSharp.ZombieModSharp.HumanClassCookieKey, humanClassKey);
+                    preferences.SetCookie(client.SteamId, global::ZombieModSharp.ZombieModSharp.ZombieClassCookieKey, classObject.Key);
                 }
                 else
                 {
                     player.HumanClass = classValue;
                     var zombieClassKey = classesData.FirstOrDefault(c => c.Value == player.ZombieClass).Key;
-                    _sqlite.InsertPlayerClassesAsync(client.SteamId.ToString(), classObject.Key, zombieClassKey);
+                    preferences.SetCookie(client.SteamId, global::ZombieModSharp.ZombieModSharp.HumanClassCookieKey, classObject.Key);
+                    preferences.SetCookie(client.SteamId, global::ZombieModSharp.ZombieModSharp.ZombieClassCookieKey, zombieClassKey);
                 }
 
                 _modSharp.PrintChannelFilter(HudPrintChannel.Chat, $"{ZombieModSharp.Prefix} You have selected the new class, this change will be applied in the next respawn.", new RecipientFilter(client));

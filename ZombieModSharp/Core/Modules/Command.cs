@@ -1,5 +1,6 @@
 using Sharp.Extensions.CommandManager;
 using Sharp.Modules.AdminManager.Shared;
+using Sharp.Modules.ClientPreferences.Shared;
 using Sharp.Shared;
 using Sharp.Shared.Definition;
 using Sharp.Shared.Enums;
@@ -8,7 +9,6 @@ using Sharp.Shared.Objects;
 using Sharp.Shared.Types;
 using System.Runtime.InteropServices;
 using ZombieModSharp.Abstractions;
-using ZombieModSharp.Abstractions.Storage;
 using static ZombieModSharp.Abstractions.IGlowServices;
 
 namespace ZombieModSharp.Core.Modules;
@@ -21,7 +21,6 @@ public class Command : ICommand
     private readonly ISharedSystem _sharedSystem;
     private readonly IModSharp _modsharp;
     private readonly ICommandManager _command;
-    private readonly ISqliteDatabase _sqlite;
     private readonly ICvarServices _cvarServices;
     private readonly IGrenadeEffect _grenadeEffect;
     private readonly ILeaderServices _leaderServices;
@@ -31,7 +30,7 @@ public class Command : ICommand
 
     private IAdminCommandRegistry? _adminManager;
 
-    public Command(IPlayerManager playerManager, IZTele ztele, IInfect infect, ISharedSystem sharedSystem, ICommandManager command, ISqliteDatabase sqlite, ICvarServices cvarServices, IGrenadeEffect grenadeEffect, ILeaderServices leader, IGlowServices glowServices, IMarkerServices markerServices, IPlayerClasses playerClasses)
+    public Command(IPlayerManager playerManager, IZTele ztele, IInfect infect, ISharedSystem sharedSystem, ICommandManager command, ICvarServices cvarServices, IGrenadeEffect grenadeEffect, ILeaderServices leader, IGlowServices glowServices, IMarkerServices markerServices, IPlayerClasses playerClasses)
     {
         _playerManager = playerManager;
         _ztele = ztele;
@@ -39,7 +38,6 @@ public class Command : ICommand
         _sharedSystem = sharedSystem;
         _modsharp = _sharedSystem.GetModSharp();
         _command = command;
-        _sqlite = sqlite;
         _cvarServices = cvarServices;
         _grenadeEffect = grenadeEffect;
         _leaderServices = leader;
@@ -477,7 +475,7 @@ public class Command : ICommand
     private void ZSoundCommand(IGameClient client, StringCommand command)
     {
         var player = _playerManager.GetOrCreatePlayer(client);
-        float volume = 100.0f;
+        var volume = player.SoundVolume;
 
         if(command.ArgCount < 1)
         {
@@ -490,7 +488,7 @@ public class Command : ICommand
             var arg = command.GetArg(1);
 
             // we need to check if arg is number or not.
-            if(!float.TryParse(arg, out volume))
+            if(!int.TryParse(arg, out volume))
             {
                 // we just keep the same value.
                 volume = player.SoundVolume;
@@ -505,11 +503,12 @@ public class Command : ICommand
             player.SoundVolume = volume;
         }
 
-        // whatever happened here is we will need to insert it.
-        _modsharp.InvokeFrameActionAsync(async () => {
-            var success = await _sqlite.InsertPlayerSoundAsync(client.SteamId.ToString(), player.SoundEnabled, volume);
-            ReplyToCommand(client, $"You have{(player.SoundEnabled ? "\x05 Enabled" : "\x07 Disabled")}\x01 zombie sound. {(player.SoundEnabled ? $"And set volume to\x06 {(int)player.SoundVolume}" : string.Empty)}");
-        });
+        var preferences = _sharedSystem.GetSharpModuleManager()
+                                       .GetRequiredSharpModuleInterface<IClientPreference>(IClientPreference.Identity)
+                                       .Instance!;
+        preferences.SetCookie(client.SteamId, global::ZombieModSharp.ZombieModSharp.SoundEnabledCookieKey, player.SoundEnabled.ToString());
+        preferences.SetCookie(client.SteamId, global::ZombieModSharp.ZombieModSharp.SoundVolumeCookieKey, player.SoundVolume.ToString());
+        ReplyToCommand(client, $"You have{(player.SoundEnabled ? "\x05 Enabled" : "\x07 Disabled")}\x01 zombie sound. {(player.SoundEnabled ? $"And set volume to\x06 {player.SoundVolume}" : string.Empty)}");
     }
 
     private void ZClassCommand(IGameClient client, StringCommand command)

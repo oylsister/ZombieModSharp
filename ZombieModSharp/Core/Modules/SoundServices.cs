@@ -73,7 +73,7 @@ public class SoundServices : ISoundServices
 
         foreach(var player in allPlayer)
         {
-            var volume = player.Value.SoundVolume / 100;
+            var volume = player.Value.SoundVolume / 100f;
             source.EmitSound(sound, volume, new RecipientFilter(player.Key));
         }
     }
