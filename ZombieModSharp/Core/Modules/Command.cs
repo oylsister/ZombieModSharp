@@ -27,11 +27,10 @@ public class Command : ICommand
     private readonly ILeaderServices _leaderServices;
     private readonly IGlowServices _glowServices;
     private readonly IMarkerServices _markerServices;
-    private readonly IPlayerClasses _playerClasses;
 
     private IAdminCommandRegistry? _adminManager;
 
-    public Command(IPlayerManager playerManager, IZTele ztele, IInfect infect, ISharedSystem sharedSystem, ICommandManager command, ISqliteDatabase sqlite, ICvarServices cvarServices, IGrenadeEffect grenadeEffect, ILeaderServices leader, IGlowServices glowServices, IMarkerServices markerServices, IPlayerClasses playerClasses)
+    public Command(IPlayerManager playerManager, IZTele ztele, IInfect infect, ISharedSystem sharedSystem, ICommandManager command, ISqliteDatabase sqlite, ICvarServices cvarServices, IGrenadeEffect grenadeEffect, ILeaderServices leader, IGlowServices glowServices, IMarkerServices markerServices)
     {
         _playerManager = playerManager;
         _ztele = ztele;
@@ -45,7 +44,6 @@ public class Command : ICommand
         _leaderServices = leader;
         _glowServices = glowServices;
         _markerServices = markerServices;
-        _playerClasses = playerClasses;
     }
 
     public void GetAdminManager(IModSharpModuleInterface<IAdminManager>? adminManager)
@@ -57,13 +55,6 @@ public class Command : ICommand
     {
         _command.RegisterClientCommand("ztele", ZTeleCommand);
         _command.RegisterClientCommand("zsound", ZSoundCommand);
-        _command.RegisterClientCommand("zclass", ZClassCommand);
-        _command.RegisterClientCommand("vl", VoteLeaderCommand);
-        _command.RegisterClientCommand("kev", KevlarCommand);
-        _command.RegisterClientCommand("kevlar", KevlarCommand);
-
-        _command.RegisterClientCommand("zspawn", ZSpawnCommand);
-        _command.RegisterClientCommand("zammo", InfiniteAmmoCommand);
     }
 
     public void RegisterAdminCommand()
@@ -77,90 +68,13 @@ public class Command : ICommand
         _adminManager?.RegisterAdminCommand("setleader", OnLeaderCommand, ["admin:slay"]);
         _adminManager?.RegisterAdminCommand("leader", OnLeaderCommand, ["admin:slay"]);
         _adminManager?.RegisterAdminCommand("ql", OnQuitLeaderCommand, ["admin:slay"]);
-        _adminManager?.RegisterAdminCommand("removeleader", OnQuitLeaderCommand, ["admin:slay"]);
         _adminManager?.RegisterAdminCommand("pm", OnMarkerCommand, ["admin:slay"]);
         _adminManager?.RegisterAdminCommand("dm", OnDisableMarkerCommand, ["admin:slay"]);
         _adminManager?.RegisterAdminCommand("glow", OnGlowCommand, ["admin:slay"]);
         _adminManager?.RegisterAdminCommand("disglow", OnDisableGlowCommand, ["admin:slay"]);
-        _adminManager?.RegisterAdminCommand("testmode", OnTestModeCommand, ["admin:slay"]);
     }
 
-    private void KevlarCommand(IGameClient? client, StringCommand command)
-    {
-        if (client == null || !client.IsValid) return;
 
-        var controller = client.GetPlayerController();
-        if (controller == null || !controller.IsValid())
-        {
-            ReplyToCommand(client, "Can't find any player controller");
-            return;
-        }
-
-        var pawn = controller.GetPlayerPawn();
-        if (pawn == null || !pawn.IsValid())
-        {
-            ReplyToCommand(client, "Can't find any player pawn");
-            return;
-        }
-
-        if(!pawn.IsAlive)
-        {
-            ReplyToCommand(client, "You need to be alive to use this command!");
-            return;
-        }
-
-        if(_infect.IsClientInfect(client))
-        {
-            ReplyToCommand(client, "Zombies can't buy kevlar!");
-            return;
-        }
-
-        if(pawn.ArmorValue >= 100)
-        {
-            ReplyToCommand(client, "You already have full kevlar!");
-            return;
-        }
-
-        pawn.ArmorValue = 100;
-        ReplyToCommand(client, "You have purchased kevlar. Use this command again to purchase if you don't have one.");
-        controller.GetInGameMoneyService()?.Account -= 1000;
-    }
-
-    private void VoteLeaderCommand(IGameClient? client, StringCommand command)
-    {
-        if (client == null || !client.IsValid) return;
-
-        if (command.ArgCount < 1)
-        {
-            ReplyToCommand(client, "Usage: vl <target>");
-            return;
-        }
-
-        var arg = command.GetArg(1);
-        var target = GetTargets(client, arg).FirstOrDefault();
-
-        if (target == null || !target.IsValid)
-        {
-            ReplyToCommand(client, "Can't find any player");
-            return;
-        }
-
-        // 已經是 leader
-        var targetController = target.GetPlayerController();
-        if (targetController == null || !targetController.IsValid())
-        {
-            ReplyToCommand(client, "Can't find any player controller");
-            return;
-        }
-
-        if (_leaderServices.IsClientLeader(targetController))
-        {
-            ReplyToCommand(client, $"{target.Name} is already a leader.");
-            return;
-        }
-
-        _leaderServices.VoteLeader(client, target);
-    }
     public void OnGlowCommand(IGameClient? client, StringCommand command)
     {
         if (client == null || !client.IsValid) return;
@@ -184,12 +98,12 @@ public class Command : ICommand
 
         if (pawn == null)
         {
-            ReplyToCommand(client, $"Entity {controller.PlayerName} can't Glow");
+            ReplyToCommand(client, $"Entity {controller.PlayerName} have no Pawn can't Glow");
             return;
         }
 
         _glowServices.CreateGlow(target, pawn,
-            new Color32(255, 0, 0, 255), 13000, GlowVisibleMode.SameTeam);
+            new Color32(255, 0, 0, 255), 13000, GlowVisibleMode.ExceptTarget);
 
         ReplyToCommand(client, $"{controller.PlayerName} Glow.");
         
@@ -325,7 +239,7 @@ public class Command : ICommand
     {
         if (command.ArgCount < 1)
         {
-            ReplyToCommand(client, "Usage: ms_removeleader <target>");
+            ReplyToCommand(client, "Usage: ms_leader <target>");
             return;
         }
 
@@ -414,12 +328,6 @@ public class Command : ICommand
             return;
         }
 
-        if (_infect.IsTestMode())
-        {
-            ReplyToCommand(client, "The infection during the test mode is not available.");
-            return;
-        }
-
         var arg = command.GetArg(1);
         var target = GetTargets(client, arg);
 
@@ -504,11 +412,6 @@ public class Command : ICommand
         });
     }
 
-    private void ZClassCommand(IGameClient client, StringCommand command)
-    {
-        _playerClasses.PlayerClassMenu(client);
-    }
-
     private void ToggleRespawnCommand(IGameClient? client, StringCommand command)
     {
         if(command.ArgCount < 1)
@@ -550,137 +453,6 @@ public class Command : ICommand
 
         player.AllowExtraGrenade = !player.AllowExtraGrenade;
         ReplyToCommand(client, $"AllowExtraGrenade: {player.AllowExtraGrenade}");
-    }
-
-    private void InfiniteAmmoCommand(IGameClient? client, StringCommand command)
-    {
-        if (client == null || !client.IsValid) return;
-
-        var allow = _cvarServices.CvarList["Cvar_ZAmmoAllow"]?.GetBool();
-        if (allow.HasValue && !allow.Value)
-        {
-            ReplyToCommand(client, "This feature is not available.");
-            return;
-        }
-
-        var controller = client.GetPlayerController();
-        if (controller == null || !controller.IsValid())
-        {
-            ReplyToCommand(client, "Can't find any player controller");
-            return;
-        }
-
-        var pawn = controller.GetPlayerPawn();
-        if (pawn == null || !pawn.IsValid())
-        {
-            ReplyToCommand(client, "Can't find any player pawn");
-            return;
-        }
-
-        if (!pawn.IsAlive)
-        {
-            ReplyToCommand(client, "You need to be alive to use this command!");
-            return;
-        }
-
-        if (_infect.IsClientInfect(client))
-        {
-            ReplyToCommand(client, "Zombies can't use this!");
-            return;
-        }
-
-        var player = _playerManager.GetOrCreatePlayer(client);
-
-        if (player.InfiniteAmmo)
-        {
-            ReplyToCommand(client, "Infinite ammo is already active!");
-            return;
-        }
-
-        var cost = _cvarServices.CvarList["Cvar_ZAmmoCost"]?.GetInt32() ?? 7500;
-        var duration = _cvarServices.CvarList["Cvar_ZAmmoDuration"]?.GetFloat() ?? 15.0f;
-        var money = controller.GetInGameMoneyService()?.Account;
-
-        if (money < cost)
-        {
-            ReplyToCommand(client, $"You don't have enough cash! (Required: {cost}$)");
-            return;
-        }
-
-        controller.GetInGameMoneyService()!.Account -= cost;
-        player.InfiniteAmmo = true;
-        ReplyToCommand(client, $"Infinite ammo activated for {duration} seconds!");
-
-        _modsharp.PushTimer(new Func<TimerAction>(() =>
-        {
-            player.InfiniteAmmo = false;
-            ReplyToCommand(client, "Infinite ammo has expired!");
-            return TimerAction.Continue;
-        }), duration, GameTimerFlags.StopOnRoundEnd | GameTimerFlags.StopOnMapEnd);
-    }
-
-    private void ZSpawnCommand(IGameClient? client, StringCommand command)
-    {
-        if (client == null || !client.IsValid) return;
-
-        var controller = client.GetPlayerController();
-        if (controller == null || !controller.IsValid())
-        {
-            ReplyToCommand(client, "Can't find any player controller");
-            return;
-        }
-
-        if(controller.Team == CStrikeTeam.Spectator || controller.Team == CStrikeTeam.UnAssigned)
-         {
-            ReplyToCommand(client, "You can't use this command in spectator!");
-            return;
-        }
-
-        var pawn = controller.GetPlayerPawn();
-
-        if (pawn == null || !pawn.IsValid())
-        {
-            ReplyToCommand(client, "Can't find any player pawn");
-            return;
-        }
-
-        if(pawn.IsAlive)
-        {
-            ReplyToCommand(client, "You need to be dead to use this command!");
-            return;
-        }
-
-        if(!RespawnServices.IsRespawnEnabled())
-        {
-            ReplyToCommand(client, "Respawn has been disabled.");
-            return;
-        }
-
-        controller.Respawn();
-    }
-
-    private void OnTestModeCommand(IGameClient? client, StringCommand command)
-    {
-        if (command.ArgCount < 1)
-        {
-            ReplyToCommand(client, "Usage: testmode <0-1>");
-            return;
-        }
-
-        if (!int.TryParse(command.GetArg(1), out var arg))
-        {
-            ReplyToCommand(client, "Usage: testmode <0-1>");
-            return;
-        }
-
-        if (arg > 1 || arg < 0)
-        {
-            ReplyToCommand(client, "Usage: testmode <0-1>");
-            return;
-        }
-
-        _infect.SetTestMode(arg == 1);
-        ReplyToCommand(client, $"Admin {client?.Name} has{(arg == 1 ? "\x05 Enabled" : "\x07 Disabled")} \x01Test mode.");
     }
 
     public void ReplyToCommand(IGameClient? client, string text)
