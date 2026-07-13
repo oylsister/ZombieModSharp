@@ -188,8 +188,16 @@ public class Command : ICommand
             return;
         }
 
-        _glowServices.CreateGlow(target, pawn,
-            new Color32(255, 0, 0, 255), 13000, GlowVisibleMode.SameTeam);
+        byte randomByteR = (byte)Random.Shared.Next(0, 256);
+        byte randomByteG = (byte)Random.Shared.Next(0, 256);
+
+        _glowServices.CreateGlow(
+            target,
+            pawn,
+            new Color32(randomByteR, randomByteG, 0, 255),
+            0,
+            IGlowServices.GlowVisibleMode.ExceptTarget
+        );
 
         ReplyToCommand(client, $"{controller.PlayerName} Glow.");
         

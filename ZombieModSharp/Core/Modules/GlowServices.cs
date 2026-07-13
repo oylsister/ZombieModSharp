@@ -67,13 +67,13 @@ public class GlowServices : IGlowServices
             { "disablereceiveshadows", true },
             { "disableshadows", true },
             { "glowcolor", $"{color.R} {color.G} {color.B} {color.A}" },
-            { "glowrangemin", 1 },
+            { "glowrangemin", 0 },
             { "glowrange", maxDistance },
             { "glowteam", -1 },
             { "glowstate", 3 },
             { "renderamt", 0 },
-            { "mindist", 1 },
-            { "maxdist", 10000 }
+            { "mindist", 0 },
+            { "maxdist", 25565 }
         };
 
         if (entityMgr.SpawnEntitySync<IBaseModelEntity>("prop_dynamic", glowKv) is not { } glow)

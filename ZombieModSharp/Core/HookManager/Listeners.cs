@@ -184,17 +184,21 @@ public class Listeners : IListeners, IClientListener, IGameListener, IEntityList
             {
                 if (controller == null || !controller.IsValid()) continue;
 
+                
                 var pawn = controller.GetPlayerPawn();
                 if (pawn == null || !pawn.IsValid()) continue;
 
                 var client = controller.GetGameClient();
                 if (client == null || !client.IsValid) continue;
 
+                byte randomByteR = (byte)Random.Shared.Next(0, 256);
+                byte randomByteG = (byte)Random.Shared.Next(0, 256);
+
                 _glowServices.CreateGlow(
                     client,
                     pawn,
-                    new Color32(0, 255, 0, 255), // ��� Glow
-                    5000,
+                    new Color32(randomByteR, randomByteG, 0, 255),
+                    0,
                     IGlowServices.GlowVisibleMode.ExceptTarget
                 );
             }
