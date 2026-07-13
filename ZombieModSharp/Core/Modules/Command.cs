@@ -103,7 +103,7 @@ public class Command : ICommand
         }
 
         _glowServices.CreateGlow(target, pawn,
-            new Color32(255, 0, 0, 255), 13000, GlowVisibleMode.ExceptTarget);
+            new Color32(255, 0, 0, 255), 0, GlowVisibleMode.ExceptTarget);
 
         ReplyToCommand(client, $"{controller.PlayerName} Glow.");
         
