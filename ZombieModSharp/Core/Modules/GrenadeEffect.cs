@@ -100,14 +100,18 @@ public class GrenadeEffect : IGrenadeEffect
 
     private void ApplyDamage(IPlayerPawn playerPawn, int damage)
     {
-        playerPawn.DispatchTraceAttack(new TakeDamageInfo
+        var activeWeapon = playerPawn.GetActiveWeapon();
+
+        var info = new TakeDamageInfo (playerPawn)
         {
-            Inflictor = playerPawn.Handle,
-            Ability = playerPawn.Handle,
+            Inflictor = activeWeapon!.Handle,
+            Ability = activeWeapon.Handle,
             Damage = damage,
             DamageType = DamageFlagBits.Fall,
             TakeDamageFlags = TakeDamageFlags.IgnoreArmor
-        }, true);
+        };
+
+        playerPawn.DispatchTraceAttack(info, true);
     }
 
     public void ApplyFreeze(IBaseEntity grenade, float distanceLimit, float duration)
