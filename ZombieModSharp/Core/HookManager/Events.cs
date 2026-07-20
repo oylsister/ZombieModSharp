@@ -184,6 +184,10 @@ public class Events : IEvents
 
     private void OnRoundStart(IGameEvent e)
     {
+        // Move from OnRoundEnd to here to ensure that infinite ammo is disabled at the start of each round.
+        foreach (var player in _playerManager.GetAllPlayers().Values)
+            player.InfiniteAmmo = false;
+
         RoundEnded = false;
         //_modSharp.PrintChannelAll(HudPrintChannel.Chat, $"The round just started");
         _infect.OnRoundStart();
@@ -207,8 +211,6 @@ public class Events : IEvents
         // _modSharp.PrintChannelAll(HudPrintChannel.Chat, $"The round just ended");
         RespawnServices.SetRespawnEnable(false);
         _infect.OnRoundEnd();
-        foreach (var player in _playerManager.GetAllPlayers().Values)
-            player.InfiniteAmmo = false;
 
         if(_roundTimer != Guid.Empty)
         {
