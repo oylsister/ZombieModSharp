@@ -89,4 +89,7 @@ public class Player
     public int LeaderVoteCount { get; set; } = 0;
     public IGameClient? LeaderVotedTarget { get; set; } = null;
     public bool InfiniteAmmo { get; set; } = false;
+    public int InfiniteAmmoUsesThisRound { get; set; } = 0;
+    public bool PowerKnifeActive { get; set; } = false;
+    public int PowerKnifeUsesThisRound { get; set; } = 0;
 }

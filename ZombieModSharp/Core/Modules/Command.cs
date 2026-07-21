@@ -62,6 +62,7 @@ public class Command : ICommand
 
         _command.RegisterClientCommand("zspawn", ZSpawnCommand);
         _command.RegisterClientCommand("zammo", InfiniteAmmoCommand);
+        _command.RegisterClientCommand("zknife", PowerKnifeCommand);
     }
 
     public void RegisterAdminCommand()
@@ -606,7 +607,14 @@ public class Command : ICommand
 
         var cost = _cvarServices.CvarList["Cvar_ZAmmoCost"]?.GetInt32() ?? 7500;
         var duration = _cvarServices.CvarList["Cvar_ZAmmoDuration"]?.GetFloat() ?? 15.0f;
+        var usesPerRound = _cvarServices.CvarList["Cvar_ZAmmoUsesPerRound"]?.GetInt32() ?? 1;
         var money = controller.GetInGameMoneyService()?.Account;
+
+        if (player.InfiniteAmmoUsesThisRound >= usesPerRound)
+        {
+            ReplyToCommand(client, $"You can only use infinite ammo {usesPerRound} time(s) per round!");
+            return;
+        }
 
         if (money < cost)
         {
@@ -616,12 +624,94 @@ public class Command : ICommand
 
         controller.GetInGameMoneyService()!.Account -= cost;
         player.InfiniteAmmo = true;
+        player.InfiniteAmmoUsesThisRound++;
         ReplyToCommand(client, $"Infinite ammo activated for {duration} seconds!");
 
         _modsharp.PushTimer(new Func<TimerAction>(() =>
         {
             player.InfiniteAmmo = false;
             ReplyToCommand(client, "Infinite ammo has expired!");
+            return TimerAction.Continue;
+        }), duration, GameTimerFlags.StopOnRoundEnd | GameTimerFlags.StopOnMapEnd);
+    }
+
+    private void PowerKnifeCommand(IGameClient? client, StringCommand command)
+    {
+        if (client == null || !client.IsValid) return;
+
+        var allow = _cvarServices.CvarList["Cvar_ZKnifeAllow"]?.GetBool();
+        if (allow.HasValue && !allow.Value)
+        {
+            ReplyToCommand(client, "This feature is not available.");
+            return;
+        }
+
+        if (!_infect.IsInfectStarted())
+        {
+            ReplyToCommand(client, "You can only use this after infection has started!");
+            return;
+        }
+
+        var controller = client.GetPlayerController();
+        if (controller == null || !controller.IsValid())
+        {
+            ReplyToCommand(client, "Can't find any player controller");
+            return;
+        }
+
+        var pawn = controller.GetPlayerPawn();
+        if (pawn == null || !pawn.IsValid())
+        {
+            ReplyToCommand(client, "Can't find any player pawn");
+            return;
+        }
+
+        if (!pawn.IsAlive)
+        {
+            ReplyToCommand(client, "You need to be alive to use this command!");
+            return;
+        }
+
+        if (_infect.IsClientInfect(client))
+        {
+            ReplyToCommand(client, "Zombies can't use this!");
+            return;
+        }
+
+        var player = _playerManager.GetOrCreatePlayer(client);
+
+        if (player.PowerKnifeActive)
+        {
+            ReplyToCommand(client, "Power knife is already active!");
+            return;
+        }
+
+        var cost = _cvarServices.CvarList["Cvar_ZKnifeCost"]?.GetInt32() ?? 10000;
+        var duration = _cvarServices.CvarList["Cvar_ZKnifeDuration"]?.GetFloat() ?? 3.0f;
+        var usesPerRound = _cvarServices.CvarList["Cvar_ZKnifeUsesPerRound"]?.GetInt32() ?? 1;
+        var money = controller.GetInGameMoneyService()?.Account;
+
+        if (player.PowerKnifeUsesThisRound >= usesPerRound)
+        {
+            ReplyToCommand(client, $"You can only use power knife {usesPerRound} time(s) per round!");
+            return;
+        }
+
+        if (money < cost)
+        {
+            ReplyToCommand(client, $"You don't have enough cash! (Required: {cost}$)");
+            return;
+        }
+
+        controller.GetInGameMoneyService()!.Account -= cost;
+        player.PowerKnifeActive = true;
+        player.PowerKnifeUsesThisRound++;
+        ReplyToCommand(client, $"Power knife activated for {duration} seconds!");
+
+        _modsharp.PushTimer(new Func<TimerAction>(() =>
+        {
+            player.PowerKnifeActive = false;
+            ReplyToCommand(client, "Power knife has expired!");
             return TimerAction.Continue;
         }), duration, GameTimerFlags.StopOnRoundEnd | GameTimerFlags.StopOnMapEnd);
     }

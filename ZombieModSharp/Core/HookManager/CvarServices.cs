@@ -60,6 +60,13 @@ public class CvarServices : ICvarServices
         CvarList["Cvar_ZAmmoAllow"] = _conVarManager.CreateConVar("zms_zammo_allow", true, "Allow zammo command or not", ConVarFlags.Release);
         CvarList["Cvar_ZAmmoCost"] = _conVarManager.CreateConVar("zms_zammo_cost", 7500, 0, 99999, "Cash cost to activate infinite ammo", ConVarFlags.Release);
         CvarList["Cvar_ZAmmoDuration"] = _conVarManager.CreateConVar("zms_zammo_duration", 15.0f, 1.0f, 120.0f, "Duration (seconds) infinite ammo lasts", ConVarFlags.Release);
+        CvarList["Cvar_ZAmmoUsesPerRound"] = _conVarManager.CreateConVar("zms_zammo_uses_per_round", 1, 1, 120, "Maximum number of times each player can use zammo per round", ConVarFlags.Release);
+
+        CvarList["Cvar_ZKnifeAllow"] = _conVarManager.CreateConVar("zms_zknife_allow", true, "Allow zknife command or not", ConVarFlags.Release);
+        CvarList["Cvar_ZKnifeCost"] = _conVarManager.CreateConVar("zms_zknife_cost", 10000, 0, 99999, "Cash cost to activate power knife", ConVarFlags.Release);
+        CvarList["Cvar_ZKnifeDuration"] = _conVarManager.CreateConVar("zms_zknife_duration", 3.0f, 1.0f, 120.0f, "Duration (seconds) power knife lasts", ConVarFlags.Release);
+        CvarList["Cvar_ZKnifeDamage"] = _conVarManager.CreateConVar("zms_zknife_damage", 20000, 1, 1000000, "Damage dealt by power knife", ConVarFlags.Release);
+        CvarList["Cvar_ZKnifeUsesPerRound"] = _conVarManager.CreateConVar("zms_zknife_uses_per_round", 1, 1, 120, "Maximum number of times each player can use zknife per round", ConVarFlags.Release);
         // we check if covar existed or not.
         
         _conVarManager.InstallChangeHook(CvarList["Cvar_InfectKnockbackScale"]!, OnConVarChange);

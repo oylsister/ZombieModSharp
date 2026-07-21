@@ -21,9 +21,10 @@ public class Hooks : IHooks
     private readonly IInfect _infect;
     private readonly IGrenadeEffect _grenadeEffect;
     private readonly IWeapons _weapons;
+    private readonly ICvarServices _cvarServices;
     private readonly IEconItemManager _econItemManager;
 
-    public Hooks(ISharedSystem sharedSystem, IPlayerManager playerManager, IInfect infect, IGrenadeEffect grenadeEffect, IWeapons weapons)
+    public Hooks(ISharedSystem sharedSystem, IPlayerManager playerManager, IInfect infect, IGrenadeEffect grenadeEffect, IWeapons weapons, ICvarServices cvarServices)
     {
         _sharedSystem = sharedSystem;
         _playerManager = playerManager;
@@ -33,6 +34,7 @@ public class Hooks : IHooks
         _infect = infect;
         _grenadeEffect = grenadeEffect;
         _weapons = weapons;
+        _cvarServices = cvarServices;
         _econItemManager = _sharedSystem.GetEconItemManager();
     }
 
@@ -146,6 +148,13 @@ public class Hooks : IHooks
         {
             var inflictor = _entityManager.FindEntityByHandle(param.InflictorHandle);
             // _modsharp.PrintToChatAll($"Player {client.Name} has been tased by {inflictor?.Classname}");
+            var activeWeapon = attacker.GetPlayerController()?.GetPlayerPawn()?.GetActiveWeapon();
+
+            if(attackerPlayer.PowerKnifeActive && (activeWeapon?.IsKnife ?? false))
+            {
+                param.Damage = _cvarServices.CvarList["Cvar_ZKnifeDamage"]?.GetInt32() ?? 20000;
+            }
+
             if(inflictor?.Classname.Contains("hegrenade") ?? false)
             {
                 var duration = victimPlayer.ActiveClass?.NapalmDuration ?? 0.0f;
@@ -156,7 +165,7 @@ public class Hooks : IHooks
                 }
             }
 
-            if(inflictor?.AsPlayerPawn()?.GetActiveWeapon()?.Classname.Contains("taser") ?? false)
+            if(activeWeapon?.Classname.Contains("taser") ?? false)
             {
                 // _modsharp.PrintToChatAll($"Player {client.Name} has been tased by {attacker.Name}");
                 param.Damage = 5000;
