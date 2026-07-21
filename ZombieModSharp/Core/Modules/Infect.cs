@@ -38,6 +38,7 @@ public class Infect : IInfect
 
     public event DelegateInfectPlayer? OnClientInfect;
     public event DelegateHumanizeClient? OnClientHumanize;
+    public event Action<float>? OnMotherZombieCountdownStart;
 
     private bool _testMode = false;
 
@@ -103,7 +104,7 @@ public class Infect : IInfect
 
         clientController.SwitchTeam(CStrikeTeam.TE);
 
-        var clientZombieClass = zmPlayer.ZombieClass;
+        var clientZombieClass = zmPlayer.ZombieClass ?? _playerClasses.GetClassByName(_cvarServices.CvarList["Cvar_ZombieDefault"]?.GetString() ?? "");
 
         if(motherzombie)
         {
@@ -131,7 +132,13 @@ public class Infect : IInfect
         _soundServices.EmitZombieSound(pawn, "zr.amb.scream");
         _modSharp.PrintChannelFilter(HudPrintChannel.Chat, $"{ZombieModSharp.Prefix} You have been infected! Go pass it on to as many other players as you can.", new RecipientFilter(client));
 
-        _playerClasses.ApplyPlayerClassAttribute(pawn, clientZombieClass!);
+        if (clientZombieClass == null)
+        {
+            _logger.LogError("Zombie class is null for client {Client}", client.Name);
+            return;
+        }
+
+        _playerClasses.ApplyPlayerClassAttribute(pawn, clientZombieClass);
 
         // forcing drop all weapon.
         var weapons = pawn.GetWeaponService()?.GetMyWeapons();
@@ -168,14 +175,27 @@ public class Infect : IInfect
         pawn.GiveNamedItem(EconItemId.KnifeTe);
 
         if (attacker == null)
+        {
+            if (motherzombie)
+            {
+                var fakeAttacker = FindMotherZombieKillfeedAttacker(client);
+                if (fakeAttacker != null)
+                    FireFakePlayerDeath(client, fakeAttacker, true);
+            }
+
             return;
+        }
 
         var attackerPlayer = _player.GetOrCreatePlayer(attacker);
         attackerPlayer.TotalInfect += 1;
 
         _soundServices.ZombieMoan(pawn);
         CheckGameStatus();
+        FireFakePlayerDeath(client, attacker);
+    }
 
+    private void FireFakePlayerDeath(IGameClient client, IGameClient attacker, bool motherzombie = false)
+    {
         // Fire fake event here.
         var fakeEvent = _eventManager.CreateEvent("player_death", true);
 
@@ -188,7 +208,7 @@ public class Infect : IInfect
         {
             fakeEvent.SetPlayer("userid", client.Slot);
             fakeEvent.SetPlayer("attacker", attacker.Slot);
-            fakeEvent.SetString("weapon", "weapon_knife");
+            fakeEvent.SetString("weapon", motherzombie ? "biohazard_green_transparent" : "zombie_kill_1");
 
             fakeEvent.FireToClients();
         }
@@ -201,6 +221,15 @@ public class Infect : IInfect
         {
             fakeEvent.Dispose();
         }
+    }
+
+    private IGameClient? FindMotherZombieKillfeedAttacker(IGameClient client)
+    {
+        var alivePlayers = _player.GetAllPlayers().Keys
+            .Where(p => p != client && (p.GetPlayerController()?.GetPlayerPawn()?.IsAlive ?? false));
+
+        return alivePlayers.FirstOrDefault(p => p.GetPlayerController()?.Team == CStrikeTeam.TE)
+            ?? alivePlayers.FirstOrDefault();
     }
 
     public void HumanizeClient(IGameClient client, bool force = false)
@@ -244,7 +273,14 @@ public class Infect : IInfect
 
         pawn.AllowTakesDamage = true;
 
-        _playerClasses.ApplyPlayerClassAttribute(pawn, zmPlayer.HumanClass!);
+        var humanClass = zmPlayer.HumanClass ?? _playerClasses.GetClassByName(_cvarServices.CvarList["Cvar_HumanDefault"]?.GetString() ?? "");
+        if (humanClass == null)
+        {
+            _logger.LogError("Human class is null for client {Client}", client.Name);
+            return;
+        }
+
+        _playerClasses.ApplyPlayerClassAttribute(pawn, humanClass);
     }
 
     public void OnRoundPreStart()
@@ -486,6 +522,7 @@ public class Infect : IInfect
         }), timerCount, GameTimerFlags.StopOnRoundEnd | GameTimerFlags.StopOnMapEnd);
 
         _modSharp.PrintChannelAll(HudPrintChannel.Hint, $"First infection start in {timerCount} seconds");
+        OnMotherZombieCountdownStart?.Invoke(timerCount);
 
         countdownTimer = _modSharp.PushTimer(new Func<TimerAction>(() =>
         {

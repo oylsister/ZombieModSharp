@@ -11,16 +11,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ModSharp.Sharp.Extensions.CommandManager" Version="*" />
-    <PackageReference Include="ModSharp.Sharp.Extensions.GameEventManager" Version="*" />
-    <PackageReference Include="ModSharp.Sharp.Generator.Sdk" Version="*">
+    <PackageReference Include="ModSharp.Sharp.Extensions.CommandManager" Version="2.1.132" />
+    <PackageReference Include="ModSharp.Sharp.Extensions.GameEventManager" Version="2.1.132" />
+    <PackageReference Include="ModSharp.Sharp.Generator.Sdk" Version="2.1.132">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="ModSharp.Sharp.Modules.ClientPreferences.Shared" Version="*" />
-    <PackageReference Include="ModSharp.Sharp.Modules.MenuManager.Shared" Version="*" />
-    <PackageReference Include="ModSharp.Sharp.Shared" Version="*" />
-    <PackageReference Include="Sharp.Modules.AdminManager.Shared" Version="*" />
+    <PackageReference Include="ModSharp.Sharp.Modules.ClientPreferences.Shared" Version="2.1.132" />
+    <PackageReference Include="ModSharp.Sharp.Modules.MenuManager.Shared" Version="2.1.132" />
+    <PackageReference Include="ModSharp.Sharp.Shared" Version="2.1.132" />
+    <PackageReference Include="Sharp.Modules.AdminManager.Shared" Version="2.1.117" />
   </ItemGroup>
 
   <ItemGroup>
