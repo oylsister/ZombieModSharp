@@ -607,7 +607,14 @@ public class Command : ICommand
 
         var cost = _cvarServices.CvarList["Cvar_ZAmmoCost"]?.GetInt32() ?? 7500;
         var duration = _cvarServices.CvarList["Cvar_ZAmmoDuration"]?.GetFloat() ?? 15.0f;
+        var usesPerRound = _cvarServices.CvarList["Cvar_ZAmmoUsesPerRound"]?.GetInt32() ?? 1;
         var money = controller.GetInGameMoneyService()?.Account;
+
+        if (player.InfiniteAmmoUsesThisRound >= usesPerRound)
+        {
+            ReplyToCommand(client, $"You can only use infinite ammo {usesPerRound} time(s) per round!");
+            return;
+        }
 
         if (money < cost)
         {
@@ -617,6 +624,7 @@ public class Command : ICommand
 
         controller.GetInGameMoneyService()!.Account -= cost;
         player.InfiniteAmmo = true;
+        player.InfiniteAmmoUsesThisRound++;
         ReplyToCommand(client, $"Infinite ammo activated for {duration} seconds!");
 
         _modsharp.PushTimer(new Func<TimerAction>(() =>
@@ -680,7 +688,14 @@ public class Command : ICommand
 
         var cost = _cvarServices.CvarList["Cvar_ZKnifeCost"]?.GetInt32() ?? 10000;
         var duration = _cvarServices.CvarList["Cvar_ZKnifeDuration"]?.GetFloat() ?? 3.0f;
+        var usesPerRound = _cvarServices.CvarList["Cvar_ZKnifeUsesPerRound"]?.GetInt32() ?? 1;
         var money = controller.GetInGameMoneyService()?.Account;
+
+        if (player.PowerKnifeUsesThisRound >= usesPerRound)
+        {
+            ReplyToCommand(client, $"You can only use power knife {usesPerRound} time(s) per round!");
+            return;
+        }
 
         if (money < cost)
         {
@@ -690,6 +705,7 @@ public class Command : ICommand
 
         controller.GetInGameMoneyService()!.Account -= cost;
         player.PowerKnifeActive = true;
+        player.PowerKnifeUsesThisRound++;
         ReplyToCommand(client, $"Power knife activated for {duration} seconds!");
 
         _modsharp.PushTimer(new Func<TimerAction>(() =>

@@ -188,7 +188,9 @@ public class Events : IEvents
         foreach (var player in _playerManager.GetAllPlayers().Values)
         {
             player.InfiniteAmmo = false;
+            player.InfiniteAmmoUsesThisRound = 0;
             player.PowerKnifeActive = false;
+            player.PowerKnifeUsesThisRound = 0;
         }
 
         RoundEnded = false;
