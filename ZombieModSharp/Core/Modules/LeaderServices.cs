@@ -23,6 +23,7 @@ public class LeaderServices : ILeaderServices
     //Vote logics for leader side
     private readonly Dictionary<string, HashSet<string>> _voteMap = new();
     private readonly object _voteLock = new();
+    public event Action<IPlayerController, bool>? OnLeaderStatusChanged;
 
     public LeaderServices(ISharedSystem sharedSystem, ILogger<LeaderServices> logger, IGlowServices glowMethod, IGameEventManager gameEventManager, IPlayerManager playerManager)
     {
@@ -108,6 +109,7 @@ public class LeaderServices : ILeaderServices
         if (!_leaders.Contains(controller))
         {
             _leaders.Add(controller);
+            OnLeaderStatusChanged?.Invoke(controller, true);
             return true;
         }
         return false;
@@ -119,12 +121,19 @@ public class LeaderServices : ILeaderServices
         if (controller == null || !controller.IsValid())
             return false;
 
-        return _leaders.Remove(controller);
+        if (!_leaders.Remove(controller))
+            return false;
+
+        OnLeaderStatusChanged?.Invoke(controller, false);
+        return true;
     }
 
     
     public void ClearAllLeaders()
     {
+        foreach (var controller in _leaders.ToList())
+            OnLeaderStatusChanged?.Invoke(controller, false);
+
         _leaders.Clear();
     }
 
