@@ -649,6 +649,11 @@ public class Infect : IInfect
         return _player.GetOrCreatePlayer(client).IsHuman();
     }
 
+    public bool IsPowerKnifeActive(IGameClient client)
+    {
+        return _player.GetOrCreatePlayer(client).PowerKnifeActive;
+    }
+
     public EHookAction? ZMS_OnClientInfect(IGameClient client, IGameClient? attacker = null, bool motherzombie = false, bool force = false)
     {
         return OnClientInfect?.Invoke(client, attacker, motherzombie, force);
