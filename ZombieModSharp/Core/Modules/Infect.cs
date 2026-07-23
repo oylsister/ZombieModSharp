@@ -208,7 +208,10 @@ public class Infect : IInfect
         {
             fakeEvent.SetPlayer("userid", client.Slot);
             fakeEvent.SetPlayer("attacker", attacker.Slot);
+            fakeEvent.SetInt("assister", 65535);
+            fakeEvent.SetInt("assister_pawn", -1);
             fakeEvent.SetString("weapon", motherzombie ? "biohazard_green_transparent" : "zombie_kill_1");
+            fakeEvent.SetBool("infected", true);
 
             fakeEvent.FireToClients();
         }

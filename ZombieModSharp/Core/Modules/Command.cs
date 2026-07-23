@@ -27,10 +27,11 @@ public class Command : ICommand
     private readonly IGlowServices _glowServices;
     private readonly IMarkerServices _markerServices;
     private readonly IPlayerClasses _playerClasses;
+    private readonly IMapSettings _mapSettings;
 
     private IAdminCommandRegistry? _adminManager;
 
-    public Command(IPlayerManager playerManager, IZTele ztele, IInfect infect, ISharedSystem sharedSystem, ICommandManager command, ICvarServices cvarServices, IGrenadeEffect grenadeEffect, ILeaderServices leader, IGlowServices glowServices, IMarkerServices markerServices, IPlayerClasses playerClasses)
+    public Command(IPlayerManager playerManager, IZTele ztele, IInfect infect, ISharedSystem sharedSystem, ICommandManager command, ICvarServices cvarServices, IGrenadeEffect grenadeEffect, ILeaderServices leader, IGlowServices glowServices, IMarkerServices markerServices, IPlayerClasses playerClasses, IMapSettings mapSettings)
     {
         _playerManager = playerManager;
         _ztele = ztele;
@@ -44,6 +45,7 @@ public class Command : ICommand
         _glowServices = glowServices;
         _markerServices = markerServices;
         _playerClasses = playerClasses;
+        _mapSettings = mapSettings;
     }
 
     public void GetAdminManager(IModSharpModuleInterface<IAdminManager>? adminManager)
@@ -82,6 +84,7 @@ public class Command : ICommand
         _adminManager?.RegisterAdminCommand("glow", OnGlowCommand, ["admin:slay"]);
         _adminManager?.RegisterAdminCommand("disglow", OnDisableGlowCommand, ["admin:slay"]);
         _adminManager?.RegisterAdminCommand("testmode", OnTestModeCommand, ["admin:slay"]);
+        _adminManager?.RegisterAdminCommand("maplevel", OnMapLevelCommand, ["admin:slay"]);
     }
 
     private void KevlarCommand(IGameClient? client, StringCommand command)
@@ -571,6 +574,12 @@ public class Command : ICommand
             return;
         }
 
+        if (_mapSettings.AreBoostCommandsDisabled())
+        {
+            ReplyToCommand(client, $"This feature is disabled on {_mapSettings.GetCurrentLevel()} maps.");
+            return;
+        }
+
         if (!_infect.IsInfectStarted())
         {
             ReplyToCommand(client, "You can only use this after infection has started!");
@@ -649,6 +658,12 @@ public class Command : ICommand
         if (allow.HasValue && !allow.Value)
         {
             ReplyToCommand(client, "This feature is not available.");
+            return;
+        }
+
+        if (_mapSettings.AreBoostCommandsDisabled())
+        {
+            ReplyToCommand(client, $"This feature is disabled on {_mapSettings.GetCurrentLevel()} maps.");
             return;
         }
 
@@ -784,6 +799,24 @@ public class Command : ICommand
 
         _infect.SetTestMode(arg == 1);
         ReplyToCommand(client, $"Admin {client?.Name} has{(arg == 1 ? "\x05 Enabled" : "\x07 Disabled")} \x01Test mode.");
+    }
+
+    private void OnMapLevelCommand(IGameClient? client, StringCommand command)
+    {
+        if (command.ArgCount < 1)
+        {
+            ReplyToCommand(client, $"Current map level is {_mapSettings.GetCurrentLevel()}.");
+            return;
+        }
+
+        var level = command.GetArg(1);
+        if (!_mapSettings.SetCurrentMapLevel(level))
+        {
+            ReplyToCommand(client, "Usage: ms_maplevel <easy|normal|hard|hardest>");
+            return;
+        }
+
+        ReplyToCommand(client, $"Map level is now {_mapSettings.GetCurrentLevel()}.");
     }
 
     public void ReplyToCommand(IGameClient? client, string text)
