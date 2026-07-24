@@ -152,8 +152,14 @@ public class PlayerClasses : IPlayerClasses
         return menu;
     }
 
-    public void ApplyPlayerClassAttribute(IPlayerPawn playerPawn, ClassAttribute classAttribute)
+    public void ApplyPlayerClassAttribute(IPlayerPawn? playerPawn, ClassAttribute classAttribute)
     {
+        if(playerPawn == null || !playerPawn.IsValidEntity)
+        {
+            _logger.LogError("IPlayerPawn is null!");
+            return;
+        }
+
         if (!playerPawn.IsAlive)
         {
             return;
