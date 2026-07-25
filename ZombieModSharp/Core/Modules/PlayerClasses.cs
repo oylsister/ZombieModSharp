@@ -168,6 +168,10 @@ public class PlayerClasses : IPlayerClasses
         playerPawn.Health = classAttribute.Health;
         var team = classAttribute.Team;
 
+        // some map item set alpha to 0, which will make the player invisible. So we need to set the alpha to 1.
+        //playerPawn.AcceptInput("Alpha", playerPawn, playerPawn, 255);
+        playerPawn.RenderColor = new Color32(255, 255, 255, 255);
+
         if (classAttribute.Model != "default" && !string.IsNullOrEmpty(classAttribute.Model))
             playerPawn.SetModel(classAttribute.Model);
 
