@@ -28,8 +28,7 @@ public static class ServiceCollectionExtensions
             .AddSingleton<IGrenadeEffect, GrenadeEffect>()
             .AddSingleton<IMarkerServices, MarkerServices>()
             .AddSingleton<IGlowServices, GlowServices>()
-            .AddSingleton<ILeaderServices, LeaderServices>()
-            .AddSingleton<IMapSettings, MapSettings>();
+            .AddSingleton<ILeaderServices, LeaderServices>();
 
         return services;
     }

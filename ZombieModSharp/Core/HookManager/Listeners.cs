@@ -35,9 +35,8 @@ public class Listeners : IListeners, IClientListener, IGameListener, IEntityList
     private readonly IMarkerServices _markerServices;
     private readonly IGlowServices _glowServices;
     private readonly ILeaderServices _leaderServices;
-    private readonly IMapSettings _mapSettings;
 
-    public Listeners(IPlayerManager playerManager, ISharedSystem sharedSystem, ICvarServices cvarServices, IPlayerClasses playerClasses, IPrecacheManager precacheManager, IRespawnServices respawnServices, IWeapons weapons, IGrenadeEffect grenadeEffect, IMarkerServices markerServices, ILeaderServices leaderServices, IGlowServices glowServices, IMapSettings mapSettings)
+    public Listeners(IPlayerManager playerManager, ISharedSystem sharedSystem, ICvarServices cvarServices, IPlayerClasses playerClasses, IPrecacheManager precacheManager, IRespawnServices respawnServices, IWeapons weapons, IGrenadeEffect grenadeEffect, IMarkerServices markerServices, ILeaderServices leaderServices, IGlowServices glowServices)
     {
         _playerManager = playerManager;
         _sharedSystem = sharedSystem;
@@ -53,7 +52,6 @@ public class Listeners : IListeners, IClientListener, IGameListener, IEntityList
         _markerServices = markerServices;
         _leaderServices = leaderServices;
         _glowServices = glowServices;
-        _mapSettings = mapSettings;
 
     }
 
@@ -120,7 +118,6 @@ public class Listeners : IListeners, IClientListener, IGameListener, IEntityList
 
         if(!string.IsNullOrEmpty(mapname))
         {
-            _mapSettings.SetCurrentMap(mapname);
             _modsharp.ServerCommand($"exec zombiemodsharp/{mapname}.cfg");
         }
     }

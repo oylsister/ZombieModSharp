@@ -12,11 +12,10 @@ public class Configs : IConfigs
     private readonly IHitGroup _hitGroup;
     private readonly IPrecacheManager _precacheManager;
     private readonly IPlayerClasses _playerClasses;
-    private readonly IMapSettings _mapSettings;
 
     private static string configPath = string.Empty;
 
-    public Configs(ISharedSystem sharedSystem, ILogger<Configs> logger, IWeapons weapons, IHitGroup hitGroup, IPrecacheManager precacheManager, IPlayerClasses playerClasses, IMapSettings mapSettings)
+    public Configs(ISharedSystem sharedSystem, ILogger<Configs> logger, IWeapons weapons, IHitGroup hitGroup, IPrecacheManager precacheManager, IPlayerClasses playerClasses)
     {
         _sharedSystem = sharedSystem;
         _logger = logger;
@@ -24,7 +23,6 @@ public class Configs : IConfigs
         _hitGroup = hitGroup;
         _precacheManager = precacheManager;
         _playerClasses = playerClasses;
-        _mapSettings = mapSettings;
     }
 
     public void Init()
@@ -45,6 +43,5 @@ public class Configs : IConfigs
         _playerClasses.LoadConfig(configPath);
         _weapons.LoadConfig(configPath);
         _hitGroup.LoadConfig(configPath);
-        _mapSettings.LoadConfig(configPath);
     }
 }

@@ -90,21 +90,6 @@ public class Hooks : IHooks
             return new HookReturnValue<bool>(EHookAction.SkipCallReturnOverride, false);
         }
 
-        // we check grenade number here.
-        var weapons = param.Pawn.GetWeaponService()?.GetMyWeapons();
-        
-        if(weapons != null)
-        {
-            foreach (var item in weapons)
-            {
-                if(_entityManager.FindEntityByHandle(item)?.ItemDefinitionIndex == (ushort)EconItemId.Hegrenade)
-                {
-                    if(!client.AllowExtraGrenade && weapon.ItemDefinitionIndex == (ushort)EconItemId.Hegrenade)
-                        return new HookReturnValue<bool>(EHookAction.SkipCallReturnOverride, false);
-                }
-            }
-        }
-
         //_modsharp.PrintChannelAll(HudPrintChannel.Chat, $"This is {result.Action} and {result.ReturnValue}");
         return result;
     }
@@ -204,6 +189,9 @@ public class Hooks : IHooks
 
                 if(restrict)
                     return new HookReturnValue<EAcquireResult>(EHookAction.SkipCallReturnOverride, EAcquireResult.NotAllowedByProhibition);
+
+                if(_weapons.TryPickupStackedGrenade(param.Client, definationName))
+                    return new HookReturnValue<EAcquireResult>(EHookAction.SkipCallReturnOverride, EAcquireResult.Allowed);
             }
             else if(param.Method == EAcquireMethod.Buy)
             {

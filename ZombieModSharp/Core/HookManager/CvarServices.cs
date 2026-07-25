@@ -67,12 +67,14 @@ public class CvarServices : ICvarServices
         CvarList["Cvar_ZKnifeDuration"] = _conVarManager.CreateConVar("zms_zknife_duration", 3.0f, 1.0f, 120.0f, "Duration (seconds) power knife lasts", ConVarFlags.Release);
         CvarList["Cvar_ZKnifeDamage"] = _conVarManager.CreateConVar("zms_zknife_damage", 20000, 1, 1000000, "Damage dealt by power knife", ConVarFlags.Release);
         CvarList["Cvar_ZKnifeUsesPerRound"] = _conVarManager.CreateConVar("zms_zknife_uses_per_round", 1, 1, 120, "Maximum number of times each player can use zknife per round", ConVarFlags.Release);
+        CvarList["Cvar_GrenadeStackLimit"] = _conVarManager.CreateConVar("zms_grenade_stack_limit", 3, 1, 10, "Maximum visible stack count per grenade type.", ConVarFlags.Release);
         // we check if covar existed or not.
         
         _conVarManager.InstallChangeHook(CvarList["Cvar_InfectKnockbackScale"]!, OnConVarChange);
         _conVarManager.InstallChangeHook(CvarList["Cvar_InfectKnockbackJumpScale"]!, OnConVarChange);
         _conVarManager.InstallChangeHook(CvarList["Cvar_RespawnEnabled"]!, OnConVarChange);
         _conVarManager.InstallChangeHook(CvarList["Cvar_InfectDamageCash"]!, OnConVarChange);
+        _conVarManager.InstallChangeHook(CvarList["Cvar_GrenadeStackLimit"]!, OnConVarChange);
         var ShakeHead = _conVarManager.FindConVar("mp_flinch_punch_scale", true);
         if (ShakeHead != null)
         {
@@ -80,6 +82,7 @@ public class CvarServices : ICvarServices
         }
 
         AutoExecConfigFile();
+        ApplyGrenadeStackLimit();
     }
 
     public void Shutdown()
@@ -88,6 +91,7 @@ public class CvarServices : ICvarServices
         _conVarManager.RemoveChangeHook(CvarList["Cvar_InfectKnockbackJumpScale"]!, OnConVarChange);
         _conVarManager.RemoveChangeHook(CvarList["Cvar_RespawnEnabled"]!, OnConVarChange);
         _conVarManager.RemoveChangeHook(CvarList["Cvar_InfectDamageCash"]!, OnConVarChange);
+        _conVarManager.RemoveChangeHook(CvarList["Cvar_GrenadeStackLimit"]!, OnConVarChange);
     }
 
     private void OnConVarChange(IConVar convar)
@@ -118,6 +122,20 @@ public class CvarServices : ICvarServices
         {
             Infect.CashMultiply = convar.GetFloat();
         }
+
+        if(convar.Name == "zms_grenade_stack_limit")
+        {
+            ApplyGrenadeStackLimit();
+        }
+    }
+
+    private void ApplyGrenadeStackLimit()
+    {
+        var limit = CvarList["Cvar_GrenadeStackLimit"]?.GetInt32() ?? 3;
+        _modsharp.ServerCommand($"ammo_grenade_limit_default {limit}");
+        _modsharp.ServerCommand($"ammo_grenade_limit_flashbang {limit}");
+        _modsharp.ServerCommand($"ammo_grenade_limit_total {limit * 4}");
+        _logger.LogInformation("Grenade stack limit set to {Limit}", limit);
     }
 
     // we create convar file here.

@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Sharp.Extensions.CommandManager;
 using Sharp.Shared;
 using Sharp.Shared.Enums;
+using Sharp.Shared.GameEntities;
 using Sharp.Shared.Managers;
 using Sharp.Shared.Objects;
 using Sharp.Shared.Types;
@@ -37,8 +38,10 @@ public class Weapons : IWeapons
     private readonly ICommandManager _commandManager;
     private readonly IPlayerManager _playerManager;
     private readonly IEntityManager _entityManager;
+    private readonly IConVarManager _conVarManager;
 
     private Dictionary<string, WeaponData> weaponDatas = [];
+    private readonly Dictionary<string, int> _grenadeAmmoIndexes = [];
 
     public Weapons(ISharedSystem sharedSystem, ILogger<Weapons> logger, ICommandManager commandManager, IPlayerManager playerManager)
     {
@@ -48,6 +51,7 @@ public class Weapons : IWeapons
         _commandManager = commandManager;
         _playerManager = playerManager;
         _entityManager = _sharedSystem.GetEntityManager();
+        _conVarManager = _sharedSystem.GetConVarManager();
     }
 
     public void LoadConfig(string path)
@@ -211,29 +215,61 @@ public class Weapons : IWeapons
 
         else if(weapon.WeaponSlot == (int)GearSlot.Grenades)
         {
-            var services = pawn.GetWeaponService()?.GetMyWeapons();
+            var carriedGrenade = GetCarriedGrenade(pawn, weapon);
 
-            if(services != null)
+            if(carriedGrenade != null)
             {
-                foreach (var ent in services)
+                var stackLimit = GetGrenadeStackLimit();
+                var carriedCount = Math.Max(GetVisibleGrenadeStack(pawn, weapon.EntityName), 1);
+
+                if(carriedCount >= stackLimit)
                 {
-                    if(_entityManager.FindEntityByHandle(ent)?.Classname == weapon.EntityName)
-                    {
-                        PrintToChat(client, "You already carried that type of grenade!");
-                        return;
-                    }
+                    PrintToChat(client, $"You already carried the maximum stack of \x05{weapon.WeaponName}\x01.");
+                    return;
                 }
+
+                ChargeAndTrackPurchase(controller, player, weapon);
+                SetVisibleGrenadeStack(pawn, weapon.EntityName, carriedCount + 1);
+                PrintPurchaseMessage(client, player, weapon);
+                return;
             }
         }
 
-        controller.GetInGameMoneyService()!.Account -= weapon.Price;
+        int[]? ammoBefore = null;
 
-        if (!player.PurchaseHistory.ContainsKey(weapon.WeaponName))
-            player.PurchaseHistory[weapon.WeaponName] = 0;
+        if(weapon.WeaponSlot == (int)GearSlot.Grenades)
+            ammoBefore = SnapshotAmmo(pawn);
 
-        player.PurchaseHistory[weapon.WeaponName] += 1;
+        ChargeAndTrackPurchase(controller, player, weapon);
         pawn.GiveNamedItem(weapon.EntityName);
-        PrintToChat(client, $"You have purchased weapon \x05{weapon.WeaponName}\x01. {(weapon.MaxPurchase > 0 ? $"Purchases available left: ({weapon.MaxPurchase - player.PurchaseHistory[weapon.WeaponName]}/{weapon.MaxPurchase})" : "")}");
+
+        if(weapon.WeaponSlot == (int)GearSlot.Grenades)
+        {
+            DetectGrenadeAmmoIndex(pawn, weapon.EntityName, ammoBefore);
+            SetVisibleGrenadeStack(pawn, weapon.EntityName, Math.Max(GetVisibleGrenadeStack(pawn, weapon.EntityName), 1));
+        }
+
+        PrintPurchaseMessage(client, player, weapon);
+    }
+
+    public bool TryPickupStackedGrenade(IGameClient client, string weaponEntityName)
+    {
+        var pawn = client.GetPlayerController()?.GetPlayerPawn();
+        var entityName = GetGrenadeEntityName(weaponEntityName);
+
+        if(pawn == null || entityName == null || !pawn.IsAlive)
+            return false;
+
+        if(GetCarriedGrenade(pawn, entityName) == null)
+            return false;
+
+        var current = Math.Max(GetVisibleGrenadeStack(pawn, entityName), 1);
+
+        if(current >= GetGrenadeStackLimit())
+            return false;
+
+        SetVisibleGrenadeStack(pawn, entityName, current + 1);
+        return true;
     }
 
     public float GetWeaponKnockback(string weaponentity)
@@ -261,8 +297,157 @@ public class Weapons : IWeapons
 
     public WeaponData GetWeaponDataWithEntityName(string weaponentity)
     {
-        var result = weaponDatas.FirstOrDefault(p => p.Value.EntityName == weaponentity).Value;
+        var result = weaponDatas.FirstOrDefault(p => p.Key == weaponentity
+            || p.Value.EntityName == weaponentity
+            || p.Value.EntityName == $"weapon_{weaponentity}").Value;
         return result;
+    }
+
+    private IBaseWeapon? GetCarriedGrenade(IPlayerPawn pawn, WeaponData weaponData)
+    {
+        return GetCarriedGrenade(pawn, weaponData.EntityName);
+    }
+
+    private IBaseWeapon? GetCarriedGrenade(IPlayerPawn pawn, string entityName)
+    {
+        var weapons = pawn.GetWeaponService()?.GetMyWeapons();
+        var itemDefinitionIndex = GetGrenadeItemDefinitionIndex(entityName);
+
+        if(weapons == null)
+            return null;
+
+        foreach(var item in weapons)
+        {
+            var weapon = _entityManager.FindEntityByHandle(item)?.AsBaseWeapon();
+
+            if(weapon == null)
+                continue;
+
+            if(weapon.Classname == entityName)
+                return weapon;
+
+            if(itemDefinitionIndex.HasValue && weapon.ItemDefinitionIndex == itemDefinitionIndex.Value)
+                return weapon;
+        }
+
+        return null;
+    }
+
+    private static ushort? GetGrenadeItemDefinitionIndex(string entityName)
+    {
+        return entityName == "weapon_hegrenade" ? (ushort)EconItemId.Hegrenade : null;
+    }
+
+    private int GetGrenadeStackLimit()
+    {
+        return _conVarManager.FindConVar("zms_grenade_stack_limit", true)?.GetInt32() ?? 3;
+    }
+
+    private int[]? SnapshotAmmo(IPlayerPawn pawn)
+    {
+        var ammo = pawn.GetWeaponService()?.GetAmmo();
+
+        if(ammo == null)
+            return null;
+
+        var snapshot = new int[ammo.Size];
+
+        for(var i = 0; i < ammo.Size; i++)
+            snapshot[i] = ammo[i];
+
+        return snapshot;
+    }
+
+    private void DetectGrenadeAmmoIndex(IPlayerPawn pawn, string entityName, int[]? ammoBefore)
+    {
+        if(ammoBefore == null || _grenadeAmmoIndexes.ContainsKey(entityName))
+            return;
+
+        var ammo = pawn.GetWeaponService()?.GetAmmo();
+
+        if(ammo == null)
+            return;
+
+        var length = Math.Min(ammo.Size, ammoBefore.Length);
+
+        for(var i = 0; i < length; i++)
+        {
+            if(ammo[i] > ammoBefore[i])
+            {
+                _grenadeAmmoIndexes[entityName] = i;
+                return;
+            }
+        }
+    }
+
+    private int GetVisibleGrenadeStack(IPlayerPawn pawn, string entityName)
+    {
+        var index = GetGrenadeAmmoIndex(entityName);
+        var ammo = pawn.GetWeaponService()?.GetAmmo();
+
+        if(index == null || ammo == null || index.Value >= ammo.Size)
+            return 0;
+
+        return ammo[index.Value];
+    }
+
+    private void SetVisibleGrenadeStack(IPlayerPawn pawn, string entityName, int count)
+    {
+        var index = GetGrenadeAmmoIndex(entityName);
+        var ammo = pawn.GetWeaponService()?.GetAmmo();
+
+        if(index == null || ammo == null || index.Value >= ammo.Size)
+            return;
+
+        ammo[index.Value] = (ushort)Math.Clamp(count, 0, GetGrenadeStackLimit());
+    }
+
+    private int? GetGrenadeAmmoIndex(string entityName)
+    {
+        entityName = GetGrenadeEntityName(entityName) ?? entityName;
+
+        if(_grenadeAmmoIndexes.TryGetValue(entityName, out var cached))
+            return cached;
+
+        return entityName switch
+        {
+            "weapon_flashbang" => 14,
+            "weapon_hegrenade" => 15,
+            "weapon_smokegrenade" => 16,
+            "weapon_molotov" => 17,
+            "weapon_decoy" => 18,
+            "weapon_incgrenade" => 17,
+            _ => null
+        };
+    }
+
+    private static string? GetGrenadeEntityName(string weaponName)
+    {
+        return weaponName switch
+        {
+            "hegrenade" or "weapon_hegrenade" => "weapon_hegrenade",
+            "flashbang" or "weapon_flashbang" => "weapon_flashbang",
+            "smokegrenade" or "weapon_smokegrenade" => "weapon_smokegrenade",
+            "decoy" or "weapon_decoy" => "weapon_decoy",
+            "molotov" or "weapon_molotov" => "weapon_molotov",
+            "incgrenade" or "weapon_incgrenade" => "weapon_incgrenade",
+            _ => null
+        };
+    }
+
+    private static void ChargeAndTrackPurchase(IPlayerController controller, Player player, WeaponData weapon)
+    {
+        controller.GetInGameMoneyService()!.Account -= weapon.Price;
+
+        if (!player.PurchaseHistory.ContainsKey(weapon.WeaponName))
+            player.PurchaseHistory[weapon.WeaponName] = 0;
+
+        player.PurchaseHistory[weapon.WeaponName] += 1;
+    }
+
+    private void PrintPurchaseMessage(IGameClient client, Player player, WeaponData weapon)
+    {
+        PrintToChat(client, $"You have purchased weapon \x05{weapon.WeaponName}\x01. {(weapon.MaxPurchase > 0 ? $"Purchases available left: ({weapon.MaxPurchase - player.PurchaseHistory[weapon.WeaponName]}/{weapon.MaxPurchase})" : "")}");
     }
 
     private void PrintToChat(IGameClient client, string text)
