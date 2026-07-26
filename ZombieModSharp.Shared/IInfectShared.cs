@@ -17,4 +17,5 @@ public interface IInfectShared
     void HumanizeClient(IGameClient client, bool force = false);
     bool IsClientInfect(IGameClient client);
     bool IsClientHuman(IGameClient client);
+    bool IsPowerKnifeActive(IGameClient client);
 }

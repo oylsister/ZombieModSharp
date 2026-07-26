@@ -435,7 +435,7 @@ public class Weapons : IWeapons
         };
     }
 
-    private static void ChargeAndTrackPurchase(IPlayerController controller, Player player, WeaponData weapon)
+    private void ChargeAndTrackPurchase(IPlayerController controller, Player player, WeaponData weapon)
     {
         controller.GetInGameMoneyService()!.Account -= weapon.Price;
 
