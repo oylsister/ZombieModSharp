@@ -7,6 +7,7 @@ using ZombieModSharp.Abstractions;
 using Sharp.Shared;
 using ZombieModSharp.Abstractions.Entities;
 using Sharp.Shared.Types;
+using Shop.Shared;
 using ZombieModSharp.Shared;
 
 namespace ZombieModSharp.Core.Modules;
@@ -28,6 +29,7 @@ public class Infect : IInfect
     private readonly IParticleManager _particleManager;
     private readonly IClientManager _clientManager;
     private readonly IKnockback _knockback;
+    private IShopKnifeApi? _shopKnifeApi;
 
     private bool InfectStarted = false;
     public static float CashMultiply = 1.0f;
@@ -171,8 +173,11 @@ public class Infect : IInfect
             pawn.DropWeapon(item);
         }
 
-        pawn.RemoveAllItems();
-        pawn.GiveNamedItem(EconItemId.KnifeTe);
+        if (!(_shopKnifeApi?.TryStripWeaponsAndGiveSelectedKnife(client) ?? false))
+        {
+            pawn.RemoveAllItems();
+            pawn.GiveNamedItem(EconItemId.KnifeTe);
+        }
 
         if (attacker == null)
         {
@@ -655,6 +660,11 @@ public class Infect : IInfect
     public bool IsPowerKnifeActive(IGameClient client)
     {
         return _player.GetOrCreatePlayer(client).PowerKnifeActive;
+    }
+
+    public void SetShopKnifeApi(IShopKnifeApi? shopKnifeApi)
+    {
+        _shopKnifeApi = shopKnifeApi;
     }
 
     public EHookAction? ZMS_OnClientInfect(IGameClient client, IGameClient? attacker = null, bool motherzombie = false, bool force = false)

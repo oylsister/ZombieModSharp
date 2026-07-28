@@ -1,4 +1,5 @@
 using Sharp.Shared.Objects;
+using Shop.Shared;
 using ZombieModSharp.Shared;
 
 namespace ZombieModSharp.Abstractions;
@@ -14,4 +15,5 @@ public interface IInfect : IInfectShared
     public void SetInfectStarted(bool result);
     public void SetTestMode(bool result);
     public bool IsTestMode();
+    void SetShopKnifeApi(IShopKnifeApi? shopKnifeApi);
 }

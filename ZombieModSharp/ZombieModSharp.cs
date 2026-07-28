@@ -11,6 +11,7 @@ using Sharp.Shared;
 using Sharp.Shared.Abstractions;
 using Sharp.Shared.Managers;
 using Sharp.Shared.Objects;
+using Shop.Shared;
 using ZombieModSharp.Abstractions;
 using ZombieModSharp.Core.Services;
 using ZombieModSharp.Shared;
@@ -24,6 +25,7 @@ public sealed class ZombieModSharp : IModSharpModule
 
     private IModSharpModuleInterface<IAdminManager>? _adminManager;
     private IModSharpModuleInterface<IMenuManager>? _menuManager;
+    private IModSharpModuleInterface<IShopKnifeApi>? _shopKnifeApi;
 
     private readonly ILogger<ZombieModSharp> _logger;
     // private readonly InterfaceBridge  _bridge;
@@ -149,6 +151,7 @@ public sealed class ZombieModSharp : IModSharpModule
         _playerClasses.GetMenuManager(_menuManager);
         _clientPreference = _modules.GetRequiredSharpModuleInterface<IClientPreference>(IClientPreference.Identity);
         _clientPreferenceLoadSubscription = _clientPreference.Instance!.ListenOnLoad(OnClientPreferencesLoaded);
+        TryResolveShopKnifeApi();
     }
 
     private void OnClientPreferencesLoaded(IGameClient client)
@@ -203,6 +206,8 @@ public sealed class ZombieModSharp : IModSharpModule
         {
             TryResolveAdminManager(true);
         }
+
+        TryResolveShopKnifeApi();
     }
 
     public void OnLibraryDisconnect(string name)
@@ -232,5 +237,12 @@ public sealed class ZombieModSharp : IModSharpModule
 
         _command.GetAdminManager(_adminManager);
         _command.RegisterAdminCommand();
+    }
+
+    private void TryResolveShopKnifeApi()
+    {
+        _shopKnifeApi = _sharedSystem.GetSharpModuleManager()
+                                     .GetOptionalSharpModuleInterface<IShopKnifeApi>(IShopKnifeApi.Identity);
+        _infect.SetShopKnifeApi(_shopKnifeApi?.Instance);
     }
 }
