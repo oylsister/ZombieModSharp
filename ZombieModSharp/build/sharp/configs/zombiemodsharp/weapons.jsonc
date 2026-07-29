@@ -374,7 +374,7 @@
         "WeaponSlot": 3,
         "Knockback": 0.0,
         "Restrict": false,
-        "MaxPurchase": 2,
+        "MaxPurchase": 3,
         "Command": ["he"],
         "Price": 500
     },

@@ -571,6 +571,12 @@ public class Command : ICommand
             return;
         }
 
+        if (!_infect.IsInfectStarted())
+        {
+            ReplyToCommand(client, "You can only use this after infection has started!");
+            return;
+        }
+
         var controller = client.GetPlayerController();
         if (controller == null || !controller.IsValid())
         {
