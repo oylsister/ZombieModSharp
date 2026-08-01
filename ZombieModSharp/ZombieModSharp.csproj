@@ -24,7 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\MS-Shop\Shop\Shop.Shared\Shop.Shared.csproj" />
+    <ProjectReference Include="..\..\Shop\Shop.Shared\Shop.Shared.csproj" />
     <ProjectReference Include="..\ZombieModSharp.Shared\ZombieModSharp.Shared.csproj" />
   </ItemGroup>
 </Project>
