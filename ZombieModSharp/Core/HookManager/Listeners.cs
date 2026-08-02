@@ -111,8 +111,11 @@ public class Listeners : IListeners, IClientListener, IGameListener, IEntityList
         _precacheManager.PrecacheAllResource();
     }
 
-    public void OnGameInit()
+    public void OnGameActivate()
     {
+        // we execute config first.
+        _modsharp.ServerCommand($"exec zombiemodsharp/zombiemodsharp.cfg");
+        
         // get map name
         var mapname = _modsharp.GetMapName();
 
