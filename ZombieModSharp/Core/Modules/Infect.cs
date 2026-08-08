@@ -38,7 +38,6 @@ public class Infect : IInfect
 
     public event DelegateInfectPlayer? OnClientInfect;
     public event DelegateHumanizeClient? OnClientHumanize;
-    public event Action<float>? OnMotherZombieCountdownStart;
 
     private bool _testMode = false;
 
@@ -525,7 +524,6 @@ public class Infect : IInfect
         }), timerCount, GameTimerFlags.StopOnRoundEnd | GameTimerFlags.StopOnMapEnd);
 
         _modSharp.PrintChannelAll(HudPrintChannel.Hint, $"First infection start in {timerCount} seconds");
-        OnMotherZombieCountdownStart?.Invoke(timerCount);
 
         countdownTimer = _modSharp.PushTimer(new Func<TimerAction>(() =>
         {
@@ -650,11 +648,6 @@ public class Infect : IInfect
     public bool IsClientHuman(IGameClient client)
     {
         return _player.GetOrCreatePlayer(client).IsHuman();
-    }
-
-    public bool IsPowerKnifeActive(IGameClient client)
-    {
-        return _player.GetOrCreatePlayer(client).PowerKnifeActive;
     }
 
     public EHookAction? ZMS_OnClientInfect(IGameClient client, IGameClient? attacker = null, bool motherzombie = false, bool force = false)

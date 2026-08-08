@@ -12,10 +12,8 @@ public interface IInfectShared
 
     event DelegateInfectPlayer? OnClientInfect;
     event DelegateHumanizeClient? OnClientHumanize;
-    event Action<float>? OnMotherZombieCountdownStart;
     void InfectPlayer(IGameClient client, IGameClient? attacker = null, bool motherzombie = false, bool force = false);
     void HumanizeClient(IGameClient client, bool force = false);
     bool IsClientInfect(IGameClient client);
     bool IsClientHuman(IGameClient client);
-    bool IsPowerKnifeActive(IGameClient client);
 }

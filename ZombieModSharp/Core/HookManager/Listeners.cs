@@ -124,6 +124,7 @@ public class Listeners : IListeners, IClientListener, IGameListener, IEntityList
             _modsharp.ServerCommand($"exec zombiemodsharp/{mapname}.cfg");
         }
     }
+    
     public void OnRoundRestarted()
     {
         _markerServices.CleanupAll();
