@@ -84,7 +84,7 @@ public class Hooks : IHooks
         var client = _playerManager.GetOrCreatePlayer(player);
 
         // if player is infect and weapon is knife then ignore all of it.
-        if (client.IsInfected() && !weapon.IsKnife)
+        if (client.IsInfected() && weapon.IsValidEntity && weapon.Slot != GearSlot.Knife)
         {
             //_modsharp.PrintChannelAll(HudPrintChannel.Chat, $"This is {EHookAction.SkipCallReturnOverride} and {result.ReturnValue}");
             return new HookReturnValue<bool>(EHookAction.SkipCallReturnOverride, false);
@@ -135,7 +135,7 @@ public class Hooks : IHooks
             // _modsharp.PrintToChatAll($"Player {client.Name} has been tased by {inflictor?.Classname}");
             var activeWeapon = attacker.GetPlayerController()?.GetPlayerPawn()?.GetActiveWeapon();
 
-            if(attackerPlayer.PowerKnifeActive && (activeWeapon?.IsKnife ?? false))
+            if(attackerPlayer.PowerKnifeActive && (activeWeapon?.Slot == GearSlot.Knife))
             {
                 param.Damage = _cvarServices.CvarList["Cvar_ZKnifeDamage"]?.GetInt32() ?? 20000;
             }

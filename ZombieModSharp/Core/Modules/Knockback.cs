@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Sharp.Shared;
+using Sharp.Shared.Enums;
 using Sharp.Shared.GameEntities;
 using Sharp.Shared.Objects;
 using ZombieModSharp.Abstractions;
@@ -55,9 +56,9 @@ public class Knockback : IKnockback
         // for more precise weapon, we need to get item defenition name.
         var weaponentity = attackerPawn.GetActiveWeapon();
 
-        if(weaponentity != null)
+        if(weaponentity != null && weaponentity.IsValidEntity)
         {
-            if(weaponentity.IsKnife)
+            if(weaponentity.Slot == GearSlot.Knife)
                 weapon = "knife";
 
             else
