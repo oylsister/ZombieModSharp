@@ -247,7 +247,11 @@ public class Listeners : IListeners, IClientListener, IGameListener, IEntityList
     {
         if(entity.Classname.Contains("weapon_"))
         {
-            var weapon = entity.AsBaseWeapon();
+            if(entity.AsBaseWeapon() is not { } weapon)
+            {
+                return;
+            }
+
             var name = weapon?.GetItemDefinitionName();
 
             if(name == null || weapon == null)

@@ -318,7 +318,8 @@ public class Weapons : IWeapons
 
         foreach(var item in weapons)
         {
-            var weapon = _entityManager.FindEntityByHandle(item)?.AsBaseWeapon();
+            if(_entityManager.FindEntityByHandle(item)?.AsBaseWeapon() is not { } weapon)
+                continue;
 
             if(weapon == null)
                 continue;
