@@ -35,6 +35,17 @@ public class Knockback : IKnockback
         if (weapon.Contains("hegrenade"))
             return;
 
+        var playerPawn = client.GetPlayerController()?.GetPlayerPawn();
+
+        if (playerPawn == null)
+            return;
+
+        if (weapon.Contains("inferno"))
+        {
+            playerPawn.VelocityModifier = 40.0f / 100.0f;
+            return;
+        }
+
         if (client == null || attacker == null)
             return;
 
@@ -80,15 +91,12 @@ public class Knockback : IKnockback
 
         var pushVelocity = foward * damage * classKnockback * weaponknockback * hitgroupsKnockback * KnockbackScale * DynamicKnockbackScale;
 
-        var playerPawn = client.GetPlayerController()?.GetPlayerPawn();
-
-        if (playerPawn == null)
-            return;
-
         if(playerPawn.GroundEntity == null)
         {
             pushVelocity *= KnockbackJumpScale;
         }
+
+        // _modsharp.PrintToChatAll($"KB data: {weapon} | {pushVelocity.Length():F2}");
 
         playerPawn.ApplyAbsVelocityImpulse(pushVelocity);
     }
