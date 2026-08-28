@@ -632,12 +632,12 @@ public class Command : ICommand
         player.InfiniteAmmo = true;
         player.InfiniteAmmoUsesThisRound++;
         ReplyToCommand(client, $"Infinite ammo activated for {duration} seconds!");
-
+        
         _modsharp.PushTimer(new Func<TimerAction>(() =>
         {
             player.InfiniteAmmo = false;
             ReplyToCommand(client, "Infinite ammo has expired!");
-            return TimerAction.Continue;
+            return TimerAction.Stop;
         }), duration, GameTimerFlags.StopOnRoundEnd | GameTimerFlags.StopOnMapEnd);
     }
 
