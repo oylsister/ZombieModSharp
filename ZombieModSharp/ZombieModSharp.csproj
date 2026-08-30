@@ -19,6 +19,7 @@
     </PackageReference>
     <PackageReference Include="ModSharp.Sharp.Modules.ClientPreferences.Shared" Version="*" />
     <PackageReference Include="ModSharp.Sharp.Modules.MenuManager.Shared" Version="*" />
+    <PackageReference Include="ModSharp.Sharp.Modules.TargetingManager.Shared" Version="2.1.159" />
     <PackageReference Include="ModSharp.Sharp.Shared" Version="*" />
     <PackageReference Include="Sharp.Modules.AdminManager.Shared" Version="*" />
   </ItemGroup>

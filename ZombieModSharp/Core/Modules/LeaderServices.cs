@@ -43,6 +43,12 @@ public class LeaderServices : ILeaderServices
             return;
         }
 
+        if (_leaders.Count >= 2)
+        {
+            _modsharp.PrintChannelFilter(HudPrintChannel.Chat, $"{ZombieModSharp.Prefix} Leader slots are full (max 2). Cannot assign {target.Name}.", new RecipientFilter(voter));
+            return;
+        }
+
         var player = _playerManager.GetOrCreatePlayer(target);
         var voterPlayer = _playerManager.GetOrCreatePlayer(voter);
 
@@ -105,6 +111,12 @@ public class LeaderServices : ILeaderServices
     {
         if (!controller.IsValid())
             return false;
+
+        if (_leaders.Count >= 2)
+        {
+            _modsharp.PrintToChatAll($"{ZombieModSharp.Prefix} Leader slots are full (max 2). Cannot assign {controller.PlayerName}.");
+            return false;
+        }
 
         if (!_leaders.Contains(controller))
         {

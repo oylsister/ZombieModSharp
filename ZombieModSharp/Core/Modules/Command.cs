@@ -1,9 +1,11 @@
 using Sharp.Extensions.CommandManager;
 using Sharp.Modules.AdminManager.Shared;
 using Sharp.Modules.ClientPreferences.Shared;
+using Sharp.Modules.TargetingManager.Shared;
 using Sharp.Shared;
 using Sharp.Shared.Definition;
 using Sharp.Shared.Enums;
+using Sharp.Shared.GameEntities;
 using Sharp.Shared.Managers;
 using Sharp.Shared.Objects;
 using Sharp.Shared.Types;
@@ -15,6 +17,7 @@ namespace ZombieModSharp.Core.Modules;
 
 public class Command : ICommand
 {
+    private ITargetingManager _targetingManager;
     private readonly IPlayerManager _playerManager;
     private readonly IZTele _ztele;
     private readonly IInfect _infect;
@@ -44,6 +47,52 @@ public class Command : ICommand
         _glowServices = glowServices;
         _markerServices = markerServices;
         _playerClasses = playerClasses;
+    }
+
+    internal class AimTargetResolver : ITargetResolver
+    {
+        public const string TargetString = "@aim";
+        private readonly ISharedSystem _shared;
+
+        public AimTargetResolver(ISharedSystem shared)
+            => _shared = shared;
+
+        public string GetTarget() => TargetString;
+
+        public IEnumerable<IGameClient> Resolve(IGameClient? activator)
+        {
+            if (activator?.GetPlayerController()?.GetPlayerPawn() is not { IsAlive: true } pawn)
+                return [];
+
+            var start = pawn.GetEyePosition();
+            var fwd = pawn.GetEyeAngles().AnglesToVectorForward();
+            var end = start + (fwd * 8192.0f);
+
+            var attr = RnQueryShapeAttr.Bullets();
+            attr.SetEntityToIgnore(pawn, 0);
+
+            var trace = _shared.GetPhysicsQueryManager().TraceLine(start, end, attr);
+
+            if (!trace.DidHit()) return [];
+
+            if (_shared.GetEntityManager().MakeEntityFromPointer<IPlayerPawn>(trace.Entity) is not { IsPlayerPawn: true } tracePawn)
+                return [];
+
+            if (tracePawn.GetControllerAuto() is not { IsValidEntity: true } traceController)
+                return [];
+
+            return traceController.GetGameClient() is { } traceClient ? [traceClient] : [];
+        }
+    }
+
+    public void GetTargetManager(IModSharpModuleInterface<ITargetingManager>? targetingManager)
+    {
+        if (targetingManager?.Instance is null) return;
+
+        _targetingManager = targetingManager.Instance;
+
+        // 註冊自訂 Resolver，例如 @aim
+        _targetingManager.RegisterResolver("ZombieModSharp", new AimTargetResolver(_sharedSystem));
     }
 
     public void GetAdminManager(IModSharpModuleInterface<IAdminManager>? adminManager)
@@ -803,46 +852,12 @@ public class Command : ICommand
 
     private List<IGameClient> GetTargets(IGameClient? sender, string target)
     {
-        var targets = new List<IGameClient>();
-
-        if (string.Equals(target, "@all", StringComparison.OrdinalIgnoreCase))
+        if (_targetingManager != null)
         {
-            targets.AddRange(_playerManager.GetAllPlayers().Select(p => p.Key));
-        }
-        else if (string.Equals(target, "@me", StringComparison.OrdinalIgnoreCase))
-        {
-            if (sender != null)
-                targets.Add(sender);
-        }
-        else if (string.Equals(target, "@zombies", StringComparison.OrdinalIgnoreCase))
-        {
-            targets.AddRange(_playerManager.GetAllPlayers().Where(p => p.Value.IsInfected()).Select(p => p.Key));
-        }
-        else if (string.Equals(target, "@humans", StringComparison.OrdinalIgnoreCase))
-        {
-            targets.AddRange(_playerManager.GetAllPlayers().Where(p => !p.Value.IsInfected()).Select(p => p.Key));
-        }
-        else if (string.Equals(target, "@ct", StringComparison.OrdinalIgnoreCase))
-        {
-            targets.AddRange(_playerManager.GetAllPlayers().Where(p =>
-                p.Key.GetPlayerController()?.Team == CStrikeTeam.CT).Select(p => p.Key));
-        }
-        else if (string.Equals(target, "@t", StringComparison.OrdinalIgnoreCase))
-        {
-            targets.AddRange(_playerManager.GetAllPlayers().Where(p =>
-                p.Key.GetPlayerController()?.Team == CStrikeTeam.TE).Select(p => p.Key));
-        }
-        else if (string.Equals(target, "@bot", StringComparison.OrdinalIgnoreCase))
-        {
-            targets.AddRange(_playerManager.GetAllPlayers().Where(p => p.Key.IsFakeClient && !p.Key.IsHltv).Select(p => p.Key));
+            return _targetingManager.GetByTarget(sender, target).ToList();
         }
 
-        // find the name of 
-        else
-        {
-            targets.AddRange(_playerManager.GetAllPlayers().Where(p => p.Key.Name.Contains(target, StringComparison.OrdinalIgnoreCase)).Select(p => p.Key));
-        }
-
-        return targets;
+        // fallback: 沒有 TargetingManager 時，直接回傳空集合
+        return new List<IGameClient>();
     }
 }
