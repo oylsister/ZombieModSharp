@@ -163,7 +163,6 @@ public class GlowServices : IGlowServices
             }
 
             _glowingEntities.Remove(controllerIndex);
-            
         }
     }
 
@@ -190,5 +189,3 @@ public class GlowServices : IGlowServices
         return modelState?.ModelName;
     }
 }
-
-

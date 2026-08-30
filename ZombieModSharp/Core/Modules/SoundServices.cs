@@ -13,7 +13,7 @@ public class SoundServices : ISoundServices
     private readonly IModSharp _modsharp;
     private readonly ILogger<SoundServices> _logger;
     private readonly IPlayerManager _playerManager;
-    
+
     public SoundServices(ISharedSystem sharedSystem, IModSharp modSharp, IPlayerManager playerManager)
     {
         _sharedSystem = sharedSystem;
@@ -27,7 +27,7 @@ public class SoundServices : ISoundServices
     {
         var gameClient = player.GetController()?.GetGameClient();
 
-        if(gameClient == null)
+        if (gameClient == null)
         {
             _logger.LogError("Client is null!");
             return;
@@ -35,12 +35,12 @@ public class SoundServices : ISoundServices
 
         var client = _playerManager.GetOrCreatePlayer(gameClient);
 
-        if(_modsharp.IsValidTimer(client.MoanTimer))
+        if (_modsharp.IsValidTimer(client.MoanTimer))
             _modsharp.StopTimer(client.MoanTimer);
 
         client.MoanTimer = _modsharp.PushTimer(new Func<TimerAction>(() =>
         {
-            if(!player.IsAlive || client.IsHuman() || !client.IsInfected())
+            if (!player.IsAlive || client.IsHuman() || !client.IsInfected())
                 return TimerAction.Stop;
 
             EmitZombieSound(player, "zr.amb.zombie_voice_idle");
@@ -52,7 +52,7 @@ public class SoundServices : ISoundServices
     {
         var gameClient = player.GetController()?.GetGameClient();
 
-        if(gameClient == null)
+        if (gameClient == null)
         {
             _logger.LogError("Client is null!");
             return;
@@ -60,7 +60,7 @@ public class SoundServices : ISoundServices
 
         var client = _playerManager.GetOrCreatePlayer(gameClient);
 
-        if(client.ZombiePainTime < _modsharp.EngineTime())
+        if (client.ZombiePainTime < _modsharp.EngineTime())
         {
             EmitZombieSound(player, "zr.amb.zombie_pain");
             client.ZombiePainTime = (float)_modsharp.EngineTime() + 15.0f;
@@ -71,7 +71,7 @@ public class SoundServices : ISoundServices
     {
         var allPlayer = _playerManager.GetAllPlayers().Where(p => p.Value.SoundEnabled && p.Value.SoundVolume > 0);
 
-        foreach(var player in allPlayer)
+        foreach (var player in allPlayer)
         {
             var volume = player.Value.SoundVolume / 100f;
             source.EmitSound(sound, volume, new RecipientFilter(player.Key));

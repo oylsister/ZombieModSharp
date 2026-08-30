@@ -58,10 +58,10 @@ public class PlayerClasses : IPlayerClasses
         try
         {
             var jsonContent = File.ReadAllText(configPath);
-            
+
             // Simple comment removal (basic implementation)
             var lines = jsonContent.Split('\n');
-            var cleanedLines = lines.Select(line => 
+            var cleanedLines = lines.Select(line =>
             {
                 var commentIndex = line.IndexOf("//", StringComparison.Ordinal);
                 return commentIndex >= 0 ? line.Substring(0, commentIndex) : line;
@@ -117,33 +117,39 @@ public class PlayerClasses : IPlayerClasses
         {
             var classValue = classObject.Value;
 
-            if(selectedClass == classValue)
+            if (selectedClass == classValue)
             {
                 menu.AddDisabledItem(classValue.Name + " (Selected)");
                 continue;
             }
 
-            menu.AddItem(_ => classValue.Name, controller => 
+            menu.AddItem(_ => classValue.Name, controller =>
             {
                 var preferences = _sharedSystem.GetSharpModuleManager()
-                                               .GetRequiredSharpModuleInterface<IClientPreference>(IClientPreference.Identity)
-                                               .Instance!;
+                    .GetRequiredSharpModuleInterface<IClientPreference>(IClientPreference.Identity)
+                    .Instance!;
                 if (isZombie)
                 {
                     player.ZombieClass = classValue;
                     var humanClassKey = classesData.FirstOrDefault(c => c.Value == player.HumanClass).Key;
-                    preferences.SetCookie(client.SteamId, global::ZombieModSharp.ZombieModSharp.HumanClassCookieKey, humanClassKey);
-                    preferences.SetCookie(client.SteamId, global::ZombieModSharp.ZombieModSharp.ZombieClassCookieKey, classObject.Key);
+                    preferences.SetCookie(client.SteamId, global::ZombieModSharp.ZombieModSharp.HumanClassCookieKey,
+                        humanClassKey);
+                    preferences.SetCookie(client.SteamId, global::ZombieModSharp.ZombieModSharp.ZombieClassCookieKey,
+                        classObject.Key);
                 }
                 else
                 {
                     player.HumanClass = classValue;
                     var zombieClassKey = classesData.FirstOrDefault(c => c.Value == player.ZombieClass).Key;
-                    preferences.SetCookie(client.SteamId, global::ZombieModSharp.ZombieModSharp.HumanClassCookieKey, classObject.Key);
-                    preferences.SetCookie(client.SteamId, global::ZombieModSharp.ZombieModSharp.ZombieClassCookieKey, zombieClassKey);
+                    preferences.SetCookie(client.SteamId, global::ZombieModSharp.ZombieModSharp.HumanClassCookieKey,
+                        classObject.Key);
+                    preferences.SetCookie(client.SteamId, global::ZombieModSharp.ZombieModSharp.ZombieClassCookieKey,
+                        zombieClassKey);
                 }
 
-                _modSharp.PrintChannelFilter(HudPrintChannel.Chat, $"{ZombieModSharp.Prefix} You have selected the new class, this change will be applied in the next respawn.", new RecipientFilter(client));
+                _modSharp.PrintChannelFilter(HudPrintChannel.Chat,
+                    $"{ZombieModSharp.Prefix} You have selected the new class, this change will be applied in the next respawn.",
+                    new RecipientFilter(client));
                 controller.Exit();
             });
         }
@@ -154,7 +160,7 @@ public class PlayerClasses : IPlayerClasses
 
     public void ApplyPlayerClassAttribute(IPlayerPawn? playerPawn, ClassAttribute classAttribute)
     {
-        if(playerPawn == null || !playerPawn.IsValidEntity)
+        if (playerPawn == null || !playerPawn.IsValidEntity)
         {
             _logger.LogError("IPlayerPawn is null!");
             return;
@@ -210,7 +216,7 @@ public class PlayerClasses : IPlayerClasses
             playerPawn.ArmorValue = 100;
         }
     }
-    
+
     public ClassAttribute? GetClassByName(string classname)
     {
         if (string.IsNullOrEmpty(classname))
@@ -234,7 +240,7 @@ public class PlayerClasses : IPlayerClasses
             return;
         }
 
-        if(player.RegenerationTimer != Guid.Empty)
+        if (player.RegenerationTimer != Guid.Empty)
         {
             _modSharp.StopTimer(player.RegenerationTimer);
             player.RegenerationTimer = Guid.Empty;
@@ -243,37 +249,38 @@ public class PlayerClasses : IPlayerClasses
         if (classAttribute.HealthRegen > 0 && classAttribute.HealthRegenInterval > 0)
         {
             player.RegenerationTimer = _modSharp.PushTimer(new Func<TimerAction>(() =>
-            {
-                if (!playerPawn.IsAlive)
                 {
-                    return TimerAction.Stop;
-                }
-
-                var currentHealth = playerPawn.Health;
-                var maxHealth = classAttribute.Health;
-
-                // current health is less than max health, we can regen.
-                if (currentHealth < maxHealth)
-                {
-                    var newHealth = currentHealth + classAttribute.HealthRegen;
-
-                    // make sure we don't overheal the player.
-                    if (newHealth > maxHealth)
+                    if (!playerPawn.IsAlive)
                     {
-                        newHealth = maxHealth;
+                        return TimerAction.Stop;
                     }
 
-                    playerPawn.Health = newHealth;
-                }
+                    var currentHealth = playerPawn.Health;
+                    var maxHealth = classAttribute.Health;
 
-                else
-                {
-                    // stop the timer if player is at full health.
+                    // current health is less than max health, we can regen.
+                    if (currentHealth < maxHealth)
+                    {
+                        var newHealth = currentHealth + classAttribute.HealthRegen;
+
+                        // make sure we don't overheal the player.
+                        if (newHealth > maxHealth)
+                        {
+                            newHealth = maxHealth;
+                        }
+
+                        playerPawn.Health = newHealth;
+                    }
+
+                    else
+                    {
+                        // stop the timer if player is at full health.
+                        return TimerAction.Continue;
+                    }
+
                     return TimerAction.Continue;
-                }
-
-                return TimerAction.Continue;
-            }), classAttribute.HealthRegenInterval, GameTimerFlags.Repeatable | GameTimerFlags.StopOnRoundEnd | GameTimerFlags.StopOnMapEnd);
+                }), classAttribute.HealthRegenInterval,
+                GameTimerFlags.Repeatable | GameTimerFlags.StopOnRoundEnd | GameTimerFlags.StopOnMapEnd);
         }
     }
 }

@@ -24,7 +24,8 @@ public class Hooks : IHooks
     private readonly ICvarServices _cvarServices;
     private readonly IEconItemManager _econItemManager;
 
-    public Hooks(ISharedSystem sharedSystem, IPlayerManager playerManager, IInfect infect, IGrenadeEffect grenadeEffect, IWeapons weapons, ICvarServices cvarServices)
+    public Hooks(ISharedSystem sharedSystem, IPlayerManager playerManager, IInfect infect, IGrenadeEffect grenadeEffect,
+        IWeapons weapons, ICvarServices cvarServices)
     {
         _sharedSystem = sharedSystem;
         _playerManager = playerManager;
@@ -60,12 +61,12 @@ public class Hooks : IHooks
     {
         var client = param.Controller.GetGameClient();
 
-        if(client == null)
+        if (client == null)
             return result;
 
         var player = _playerManager.GetOrCreatePlayer(client);
 
-        if(player.ActiveClass != null)
+        if (player.ActiveClass != null)
         {
             return new HookReturnValue<float>(EHookAction.SkipCallReturnOverride, player.ActiveClass.Speed);
         }
@@ -96,7 +97,8 @@ public class Hooks : IHooks
 
     private HookReturnValue<long> OnTakeDamage(IPlayerDispatchTraceAttackHookParams param, HookReturnValue<long> result)
     {
-        var attacker = _entityManager.FindEntityByHandle(param.AttackerPawnHandle)?.GetOriginalController()?.GetGameClient();
+        var attacker = _entityManager.FindEntityByHandle(param.AttackerPawnHandle)?.GetOriginalController()
+            ?.GetGameClient();
 
         var client = param.Controller.GetGameClient();
         var victimPawn = param.Controller.AsPlayerPawn(true);
@@ -105,23 +107,24 @@ public class Hooks : IHooks
         {
             return result;
         }
+
         var attackerPlayer = _playerManager.GetOrCreatePlayer(attacker);
         var victimPlayer = _playerManager.GetOrCreatePlayer(client);
 
         // prevent infected stab to death for humans.
-        if(attackerPlayer.IsInfected() && victimPlayer.IsHuman())
+        if (attackerPlayer.IsInfected() && victimPlayer.IsHuman())
         {
             param.Damage = 1;
             return result;
         }
 
-        if(victimPlayer.IsHuman())
+        if (victimPlayer.IsHuman())
         {
             var inflictor = _entityManager.FindEntityByHandle(param.InflictorHandle);
             //_modsharp.PrintToChatAll($"Inflictor: {inflictor?.Classname} | Attacker: {attacker.Name} | Victim: {client.Name} | Owner: {inflictor?.OwnerEntity?.AsPlayerPawn()?.GetController()?.PlayerName}");
-            if(inflictor?.Classname.Contains("inferno") ?? false )
+            if (inflictor?.Classname.Contains("inferno") ?? false)
             {
-                if(attacker == client)
+                if (attacker == client)
                 {
                     //_modsharp.PrintToChatAll($"Prevent self ignite for player {client.Name}");
                     return new HookReturnValue<long>(EHookAction.SkipCallReturnOverride, 0);
@@ -129,28 +132,28 @@ public class Hooks : IHooks
             }
         }
 
-        if(attackerPlayer.IsHuman() && victimPlayer.IsInfected())
+        if (attackerPlayer.IsHuman() && victimPlayer.IsInfected())
         {
             var inflictor = _entityManager.FindEntityByHandle(param.InflictorHandle);
             // _modsharp.PrintToChatAll($"Player {client.Name} has been tased by {inflictor?.Classname}");
             var activeWeapon = attacker.GetPlayerController()?.GetPlayerPawn()?.GetActiveWeapon();
 
-            if(attackerPlayer.PowerKnifeActive && (activeWeapon?.Slot == GearSlot.Knife))
+            if (attackerPlayer.PowerKnifeActive && (activeWeapon?.Slot == GearSlot.Knife))
             {
                 param.Damage = _cvarServices.CvarList["Cvar_ZKnifeDamage"]?.GetInt32() ?? 20000;
             }
 
-            if(inflictor?.Classname.Contains("hegrenade") ?? false)
+            if (inflictor?.Classname.Contains("hegrenade") ?? false)
             {
                 var duration = victimPlayer.ActiveClass?.NapalmDuration ?? 0.0f;
 
-                if(duration > 0.0f)
+                if (duration > 0.0f)
                 {
                     _grenadeEffect.IgnitePawn(param.Pawn, (int)param.Damage, duration);
                 }
             }
 
-            if(activeWeapon?.Classname.Contains("taser") ?? false)
+            if (activeWeapon?.Classname.Contains("taser") ?? false)
             {
                 // _modsharp.PrintToChatAll($"Player {client.Name} has been tased by {attacker.Name}");
                 param.Damage = 5000;
@@ -173,7 +176,8 @@ public class Hooks : IHooks
         */
     }
 
-    private HookReturnValue<EAcquireResult> OnCanAcquire(IPlayerCanAcquireHookParams param, HookReturnValue<EAcquireResult> result)
+    private HookReturnValue<EAcquireResult> OnCanAcquire(IPlayerCanAcquireHookParams param,
+        HookReturnValue<EAcquireResult> result)
     {
         var index = param.ItemDefinitionIndex;
         var econItem = _econItemManager.GetEconItemDefinitionByIndex(index);
@@ -181,39 +185,41 @@ public class Hooks : IHooks
 
         // _modsharp.PrintToChatAll($"Player {param.Client.Name} has received {name} | {className} | {definationName}");
 
-        if(definationName != null)
+        if (definationName != null)
         {
-            if(param.Method == EAcquireMethod.PickUp)
+            if (param.Method == EAcquireMethod.PickUp)
             {
                 var restrict = _weapons.IsWeaponRestricted(definationName);
 
-                if(restrict)
-                    return new HookReturnValue<EAcquireResult>(EHookAction.SkipCallReturnOverride, EAcquireResult.NotAllowedByProhibition);
+                if (restrict)
+                    return new HookReturnValue<EAcquireResult>(EHookAction.SkipCallReturnOverride,
+                        EAcquireResult.NotAllowedByProhibition);
 
-                if(_weapons.TryPickupStackedGrenade(param.Client, definationName))
-                    return new HookReturnValue<EAcquireResult>(EHookAction.SkipCallReturnOverride, EAcquireResult.Allowed);
+                if (_weapons.TryPickupStackedGrenade(param.Client, definationName))
+                    return new HookReturnValue<EAcquireResult>(EHookAction.SkipCallReturnOverride,
+                        EAcquireResult.Allowed);
             }
-            else if(param.Method == EAcquireMethod.Buy)
+            else if (param.Method == EAcquireMethod.Buy)
             {
-                if(_playerManager.GetOrCreatePlayer(param.Client).IsInfected())
+                if (_playerManager.GetOrCreatePlayer(param.Client).IsInfected())
                 {
-                    param.Controller.Print(HudPrintChannel.Chat, $"{ZombieModSharp.Prefix} You have to be human to purchase weapon!");
-                    return new HookReturnValue<EAcquireResult>(EHookAction.SkipCallReturnOverride, EAcquireResult.NotAllowedByProhibition);
+                    param.Controller.Print(HudPrintChannel.Chat,
+                        $"{ZombieModSharp.Prefix} You have to be human to purchase weapon!");
+                    return new HookReturnValue<EAcquireResult>(EHookAction.SkipCallReturnOverride,
+                        EAcquireResult.NotAllowedByProhibition);
                 }
-                
+
                 var weaponTarget = _weapons.GetWeaponDataWithEntityName(definationName);
 
-                if(weaponTarget != null)
+                if (weaponTarget != null)
                 {
                     _weapons.PurchaseWeapon(param.Client, weaponTarget);
-                    return new HookReturnValue<EAcquireResult>(EHookAction.SkipCallReturnOverride, EAcquireResult.NotAllowedByProhibition);
+                    return new HookReturnValue<EAcquireResult>(EHookAction.SkipCallReturnOverride,
+                        EAcquireResult.NotAllowedByProhibition);
                 }
             }
         }
 
         return result;
-
-
     }
-    
 }

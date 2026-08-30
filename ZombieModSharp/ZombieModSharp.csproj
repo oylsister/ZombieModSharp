@@ -1,30 +1,30 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
-    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-    <Version>0.0.1</Version>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+		<GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
+		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+		<Version>0.0.1</Version>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="ModSharp.Sharp.Extensions.CommandManager" Version="*" />
-    <PackageReference Include="ModSharp.Sharp.Extensions.GameEventManager" Version="*" />
-    <PackageReference Include="ModSharp.Sharp.Generator.Sdk" Version="*">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
-    <PackageReference Include="ModSharp.Sharp.Modules.ClientPreferences.Shared" Version="*" />
-    <PackageReference Include="ModSharp.Sharp.Modules.MenuManager.Shared" Version="*" />
-    <PackageReference Include="ModSharp.Sharp.Modules.TargetingManager.Shared" Version="2.1.159" />
-    <PackageReference Include="ModSharp.Sharp.Shared" Version="*" />
-    <PackageReference Include="Sharp.Modules.AdminManager.Shared" Version="*" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="ModSharp.Sharp.Extensions.CommandManager" Version="*" />
+		<PackageReference Include="ModSharp.Sharp.Extensions.GameEventManager" Version="*" />
+		<PackageReference Include="ModSharp.Sharp.Generator.Sdk" Version="*">
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+			<PrivateAssets>all</PrivateAssets>
+		</PackageReference>
+		<PackageReference Include="ModSharp.Sharp.Modules.ClientPreferences.Shared" Version="*" />
+		<PackageReference Include="ModSharp.Sharp.Modules.MenuManager.Shared" Version="*" />
+		<PackageReference Include="ModSharp.Sharp.Modules.TargetingManager.Shared" Version="2.1.159" />
+		<PackageReference Include="ModSharp.Sharp.Shared" Version="*" />
+		<PackageReference Include="Sharp.Modules.AdminManager.Shared" Version="*" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\ZombieModSharp.Shared\ZombieModSharp.Shared.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\ZombieModSharp.Shared\ZombieModSharp.Shared.csproj" />
+	</ItemGroup>
 </Project>

@@ -20,7 +20,8 @@ public class Knockback : IKnockback
     private float DynamicKnockbackScale = 1.0f;
     private float KnockbackJumpScale = 1.0f;
 
-    public Knockback(ISharedSystem sharedSystem, ILogger<Knockback> logger, IPlayerManager player, IWeapons weapons, IHitGroup hitGroup)
+    public Knockback(ISharedSystem sharedSystem, ILogger<Knockback> logger, IPlayerManager player, IWeapons weapons,
+        IHitGroup hitGroup)
     {
         _sharedSystem = sharedSystem;
         _logger = logger;
@@ -51,7 +52,7 @@ public class Knockback : IKnockback
 
         var clientPlayer = _player.GetOrCreatePlayer(client);
         var attackerPlayer = _player.GetOrCreatePlayer(attacker);
-            
+
         // knockback is for zombie only.
         if (!attackerPlayer.IsHuman() || !clientPlayer.IsInfected())
             return;
@@ -67,9 +68,9 @@ public class Knockback : IKnockback
         // for more precise weapon, we need to get item defenition name.
         var weaponentity = attackerPawn.GetActiveWeapon();
 
-        if(weaponentity != null && weaponentity.IsValidEntity)
+        if (weaponentity != null && weaponentity.IsValidEntity)
         {
-            if(weaponentity.Slot == GearSlot.Knife)
+            if (weaponentity.Slot == GearSlot.Knife)
                 weapon = "knife";
 
             else
@@ -89,9 +90,10 @@ public class Knockback : IKnockback
 
         // _modsharp.PrintToChatAll($"KB data: {weaponknockback:F2} | {hitgroupsKnockback:F2} | {classKnockback:F2} | {KnockbackScale:F2} | {DynamicKnockbackScale:F2} | {KnockbackJumpScale:F2}");
 
-        var pushVelocity = foward * damage * classKnockback * weaponknockback * hitgroupsKnockback * KnockbackScale * DynamicKnockbackScale;
+        var pushVelocity = foward * damage * classKnockback * weaponknockback * hitgroupsKnockback * KnockbackScale *
+                           DynamicKnockbackScale;
 
-        if(playerPawn.GroundEntity == null)
+        if (playerPawn.GroundEntity == null)
         {
             pushVelocity *= KnockbackJumpScale;
         }
@@ -103,7 +105,7 @@ public class Knockback : IKnockback
 
     public void SetKnockbackScale(float scale)
     {
-        if(scale < 0)
+        if (scale < 0)
         {
             KnockbackScale = 1.0f;
             return;
@@ -114,7 +116,7 @@ public class Knockback : IKnockback
 
     public void SetDynamicKnockbackScale(float scale)
     {
-        if(scale < 0)
+        if (scale < 0)
         {
             DynamicKnockbackScale = 1.0f;
             return;
@@ -125,7 +127,7 @@ public class Knockback : IKnockback
 
     public void SetJumpKnockbackScale(float scale)
     {
-        if(scale < 0)
+        if (scale < 0)
         {
             KnockbackJumpScale = 1.0f;
             return;

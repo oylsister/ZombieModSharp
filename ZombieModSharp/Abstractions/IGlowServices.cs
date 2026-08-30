@@ -25,4 +25,3 @@ public interface IGlowServices
 
     public string? GetModelNameSafe(IPlayerPawn pawn);
 }
-

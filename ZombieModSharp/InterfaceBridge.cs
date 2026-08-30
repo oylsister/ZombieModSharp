@@ -11,57 +11,57 @@ namespace ZombieModSharp;
 
 internal sealed class InterfaceBridge
 {
-    public string               SharpPath         { get; }
-    public string               RootPath          { get; }
-    public string               DllPath           { get; }
-    public string               DataPath          { get; }
-    public string               ConfigPath        { get; }
-    public Version              GameVersion       { get; }
-    public Version              Version           { get; }
-    public FileVersionInfo      FileVersion       { get; }
-    public DateTime             FileTime          { get; }
-    public IEventManager        EventManager      { get; }
-    public IEntityManager       EntityManager     { get; }
-    public IClientManager       ClientManager     { get; }
-    public IConVarManager       ConVarManager     { get; }
-    public ITransmitManager     TransmitManager   { get; }
-    public IHookManager         HookManager       { get; }
-    public IFileManager         FileManager       { get; }
-    public ISchemaManager       SchemaManager     { get; }
-    public IEconItemManager     EconItemManager   { get; }
-    public ISoundManager        SoundManager      { get; }
-    public IModSharp            ModSharp          { get; }
-    public IPhysicsQueryManager PhysicsQuery      { get; }
-    public IGameData            GameData          { get; }
-    public ILoggerFactory       LoggerFactory     { get; }
+    public string SharpPath { get; }
+    public string RootPath { get; }
+    public string DllPath { get; }
+    public string DataPath { get; }
+    public string ConfigPath { get; }
+    public Version GameVersion { get; }
+    public Version Version { get; }
+    public FileVersionInfo FileVersion { get; }
+    public DateTime FileTime { get; }
+    public IEventManager EventManager { get; }
+    public IEntityManager EntityManager { get; }
+    public IClientManager ClientManager { get; }
+    public IConVarManager ConVarManager { get; }
+    public ITransmitManager TransmitManager { get; }
+    public IHookManager HookManager { get; }
+    public IFileManager FileManager { get; }
+    public ISchemaManager SchemaManager { get; }
+    public IEconItemManager EconItemManager { get; }
+    public ISoundManager SoundManager { get; }
+    public IModSharp ModSharp { get; }
+    public IPhysicsQueryManager PhysicsQuery { get; }
+    public IGameData GameData { get; }
+    public ILoggerFactory LoggerFactory { get; }
 
     private readonly ILogger<InterfaceBridge> _logger;
 
     public InterfaceBridge(string dllPath, string sharpPath, Version version, ISharedSystem sharedSystem)
     {
-        SharpPath       = sharpPath;
-        DllPath         = dllPath;
-        RootPath        = Path.GetFullPath(Path.Combine(sharpPath, ".."));
-        DataPath        = Path.GetFullPath(Path.Combine(sharpPath, "data"));
-        ConfigPath      = Path.GetFullPath(Path.Combine(sharpPath, "configs"));
-        GameVersion     = GetGameVersion(sharpPath);
-        Version         = version;
-        EventManager    = sharedSystem.GetEventManager();
-        EntityManager   = sharedSystem.GetEntityManager();
-        ClientManager   = sharedSystem.GetClientManager();
-        ConVarManager   = sharedSystem.GetConVarManager();
+        SharpPath = sharpPath;
+        DllPath = dllPath;
+        RootPath = Path.GetFullPath(Path.Combine(sharpPath, ".."));
+        DataPath = Path.GetFullPath(Path.Combine(sharpPath, "data"));
+        ConfigPath = Path.GetFullPath(Path.Combine(sharpPath, "configs"));
+        GameVersion = GetGameVersion(sharpPath);
+        Version = version;
+        EventManager = sharedSystem.GetEventManager();
+        EntityManager = sharedSystem.GetEntityManager();
+        ClientManager = sharedSystem.GetClientManager();
+        ConVarManager = sharedSystem.GetConVarManager();
         TransmitManager = sharedSystem.GetTransmitManager();
-        HookManager     = sharedSystem.GetHookManager();
-        FileManager     = sharedSystem.GetFileManager();
-        SchemaManager   = sharedSystem.GetSchemaManager();
+        HookManager = sharedSystem.GetHookManager();
+        FileManager = sharedSystem.GetFileManager();
+        SchemaManager = sharedSystem.GetSchemaManager();
         EconItemManager = sharedSystem.GetEconItemManager();
-        SoundManager    = sharedSystem.GetSoundManager();
-        ModSharp        = sharedSystem.GetModSharp();
-        PhysicsQuery    = sharedSystem.GetPhysicsQueryManager();
-        GameData        = sharedSystem.GetModSharp().GetGameData();
-        LoggerFactory   = sharedSystem.GetLoggerFactory();
-        FileVersion     = FileVersionInfo.GetVersionInfo(Path.Combine(dllPath, "ZombieModSharp.dll"));
-        FileTime        = GetSelfDBuildTime(dllPath);
+        SoundManager = sharedSystem.GetSoundManager();
+        ModSharp = sharedSystem.GetModSharp();
+        PhysicsQuery = sharedSystem.GetPhysicsQueryManager();
+        GameData = sharedSystem.GetModSharp().GetGameData();
+        LoggerFactory = sharedSystem.GetLoggerFactory();
+        FileVersion = FileVersionInfo.GetVersionInfo(Path.Combine(dllPath, "ZombieModSharp.dll"));
+        FileTime = GetSelfDBuildTime(dllPath);
 
         Directory.CreateDirectory(DataPath);
         Directory.CreateDirectory(ConfigPath);

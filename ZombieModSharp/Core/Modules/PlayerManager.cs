@@ -17,11 +17,11 @@ public class PlayerManager : IPlayerManager
 
     public Player GetOrCreatePlayer(IGameClient? client)
     {
-        if(client == null)
+        if (client == null)
         {
             throw new ArgumentNullException(nameof(client));
         }
-        
+
         if (_players.ContainsKey(client))
         {
             return _players[client];
@@ -50,13 +50,12 @@ public class Player
     {
         IsZombie = false;
         MotherZombieStatus = MotherZombieStatus.None;
-
     }
 
     // Core zombie state
     public bool IsZombie { get; set; } = false;
     public MotherZombieStatus MotherZombieStatus { get; set; } = MotherZombieStatus.None;
-    
+
     // Spawn information
     public Vector? SpawnPoint { get; set; } = null;
     public Vector? SpawnRotation { get; set; } = null;

@@ -44,8 +44,8 @@ public class PrecacheManager : IPrecacheManager
 
             _logger.LogInformation("Loaded {Count} resources for precaching", _precacheList.Count);
         });
-    } 
-    
+    }
+
     public void PrecacheAllResource()
     {
         if (_precacheList.Count <= 0)
@@ -53,8 +53,8 @@ public class PrecacheManager : IPrecacheManager
             _logger.LogWarning("No resource found for precaching");
             return;
         }
-        
-        foreach(var resource in _precacheList)
+
+        foreach (var resource in _precacheList)
         {
             _modsharp.PrecacheResource(resource);
         }

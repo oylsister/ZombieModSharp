@@ -8,7 +8,7 @@ using ZombieModSharp.Abstractions;
 
 namespace ZombieModSharp.Core.Modules;
 
-public class MarkerServices: IMarkerServices
+public class MarkerServices : IMarkerServices
 {
     private readonly List<IBaseEntity> _markers = new();
     private int _effectIndex = 0;
@@ -27,6 +27,7 @@ public class MarkerServices: IMarkerServices
     private readonly ISharedSystem _sharedSystem;
     private readonly ITransmitManager _transmitManager;
     private readonly IEntityManager _entityManager;
+
     public MarkerServices(ISharedSystem sharedSystem)
     {
         _sharedSystem = sharedSystem;
@@ -87,7 +88,6 @@ public class MarkerServices: IMarkerServices
             }
 
             _markers.RemoveAt(_markers.Count - 1);
-
         }
     }
 
@@ -110,4 +110,3 @@ public class MarkerServices: IMarkerServices
         _effectIndex = 0;
     }
 }
-

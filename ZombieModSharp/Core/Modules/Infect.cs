@@ -41,7 +41,9 @@ public class Infect : IInfect
 
     private bool _testMode = false;
 
-    public Infect(ISharedSystem sharedSystem, ILogger<Infect> logger, IPlayerManager player, IPlayerClasses playerClasses, ICvarServices cvarServices, ISoundServices soundServices, IZTele zTele, ILeaderServices leaderServices, IGlowServices glowServices, IKnockback knockback)
+    public Infect(ISharedSystem sharedSystem, ILogger<Infect> logger, IPlayerManager player,
+        IPlayerClasses playerClasses, ICvarServices cvarServices, ISoundServices soundServices, IZTele zTele,
+        ILeaderServices leaderServices, IGlowServices glowServices, IKnockback knockback)
     {
         _sharedSystem = sharedSystem;
         _entityManager = _sharedSystem.GetEntityManager();
@@ -60,22 +62,25 @@ public class Infect : IInfect
         _knockback = knockback;
     }
 
-    public void InfectPlayer(IGameClient client, IGameClient? attacker = null, bool motherzombie = false, bool force = false)
+    public void InfectPlayer(IGameClient client, IGameClient? attacker = null, bool motherzombie = false,
+        bool force = false)
     {
         if (client == null)
         {
             return;
         }
 
-        if(IsTestMode() && !force)
+        if (IsTestMode() && !force)
         {
-            _modSharp.PrintChannelFilter(HudPrintChannel.Chat, $"{ZombieModSharp.Prefix} Infection is skipped because test mode is enabled.", new RecipientFilter(client));
+            _modSharp.PrintChannelFilter(HudPrintChannel.Chat,
+                $"{ZombieModSharp.Prefix} Infection is skipped because test mode is enabled.",
+                new RecipientFilter(client));
             return;
         }
 
         var result = ZMS_OnClientInfect(client, attacker, motherzombie, force);
 
-        if(result == EHookAction.SkipCallReturnOverride)
+        if (result == EHookAction.SkipCallReturnOverride)
         {
             return;
         }
@@ -90,7 +95,7 @@ public class Infect : IInfect
 
         var clientController = client.GetPlayerController();
 
-        if(clientController == null)
+        if (clientController == null)
         {
             _logger.LogError("The client controller is null!");
             return;
@@ -103,17 +108,19 @@ public class Infect : IInfect
 
         clientController.SwitchTeam(CStrikeTeam.TE);
 
-        var clientZombieClass = zmPlayer.ZombieClass ?? _playerClasses.GetClassByName(_cvarServices.CvarList["Cvar_ZombieDefault"]?.GetString() ?? "");
+        var clientZombieClass = zmPlayer.ZombieClass ??
+                                _playerClasses.GetClassByName(
+                                    _cvarServices.CvarList["Cvar_ZombieDefault"]?.GetString() ?? "");
 
-        if(motherzombie)
+        if (motherzombie)
         {
-            if(_cvarServices.CvarList["Cvar_InfectMotherZombieSpawn"]?.GetBool() ?? false)
+            if (_cvarServices.CvarList["Cvar_InfectMotherZombieSpawn"]?.GetBool() ?? false)
                 _ztele.TeleportToSpawn(client);
 
             // we need to get mother zombie class from here.
             var motherZombieClass = _playerClasses.GetMotherZombieClass();
 
-            if(motherZombieClass != null)
+            if (motherZombieClass != null)
                 clientZombieClass = motherZombieClass;
         }
 
@@ -127,9 +134,11 @@ public class Infect : IInfect
         }
 
         pawn.AllowTakesDamage = true;
-        
+
         _soundServices.EmitZombieSound(pawn, "zr.amb.scream");
-        _modSharp.PrintChannelFilter(HudPrintChannel.Chat, $"{ZombieModSharp.Prefix} You have been infected! Go pass it on to as many other players as you can.", new RecipientFilter(client));
+        _modSharp.PrintChannelFilter(HudPrintChannel.Chat,
+            $"{ZombieModSharp.Prefix} You have been infected! Go pass it on to as many other players as you can.",
+            new RecipientFilter(client));
 
         if (clientZombieClass == null)
         {
@@ -165,7 +174,7 @@ public class Infect : IInfect
         */
         var item = pawn.GetWeaponBySlot(GearSlot.Pistol);
 
-        if(item != null && !string.IsNullOrEmpty(item.HammerId))
+        if (item != null && !string.IsNullOrEmpty(item.HammerId))
         {
             pawn.DropWeapon(item);
         }
@@ -231,7 +240,7 @@ public class Infect : IInfect
             .Where(p => p != client && (p.GetPlayerController()?.GetPlayerPawn()?.IsAlive ?? false));
 
         return alivePlayers.FirstOrDefault(p => p.GetPlayerController()?.Team == CStrikeTeam.TE)
-            ?? alivePlayers.FirstOrDefault();
+               ?? alivePlayers.FirstOrDefault();
     }
 
     public void HumanizeClient(IGameClient client, bool force = false)
@@ -253,7 +262,7 @@ public class Infect : IInfect
 
         var clientController = client.GetPlayerController();
 
-        if(clientController == null)
+        if (clientController == null)
         {
             _logger.LogError("The client controller is null!");
             return;
@@ -261,8 +270,10 @@ public class Infect : IInfect
 
         clientController.SwitchTeam(CStrikeTeam.CT);
 
-        if(force)
-            _modSharp.PrintChannelFilter(HudPrintChannel.Chat, $"{ZombieModSharp.Prefix} The merciful gods (known as admins) have resurrected your soul, find some cover!", new RecipientFilter(client));
+        if (force)
+            _modSharp.PrintChannelFilter(HudPrintChannel.Chat,
+                $"{ZombieModSharp.Prefix} The merciful gods (known as admins) have resurrected your soul, find some cover!",
+                new RecipientFilter(client));
 
         // implement model changed and health.
         var pawn = clientController.GetPlayerPawn();
@@ -275,7 +286,8 @@ public class Infect : IInfect
 
         pawn.AllowTakesDamage = true;
 
-        var humanClass = zmPlayer.HumanClass ?? _playerClasses.GetClassByName(_cvarServices.CvarList["Cvar_HumanDefault"]?.GetString() ?? "");
+        var humanClass = zmPlayer.HumanClass ??
+                         _playerClasses.GetClassByName(_cvarServices.CvarList["Cvar_HumanDefault"]?.GetString() ?? "");
         if (humanClass == null)
         {
             _logger.LogError("Human class is null for client {Client}", client.Name);
@@ -304,7 +316,7 @@ public class Infect : IInfect
                 continue;
             }
 
-            if(controller.Team == CStrikeTeam.Spectator || controller.Team == CStrikeTeam.UnAssigned)
+            if (controller.Team == CStrikeTeam.Spectator || controller.Team == CStrikeTeam.UnAssigned)
                 continue;
 
             controller.SwitchTeam(CStrikeTeam.CT);
@@ -313,12 +325,14 @@ public class Infect : IInfect
 
     public void OnRoundStart()
     {
-        _modSharp.PrintChannelAll(HudPrintChannel.Chat, $"{ZombieModSharp.Prefix} Current game mode is \x05Humans vs. Zombies\x01, the goal for zombies is to infect all humans by knifing them.");
+        _modSharp.PrintChannelAll(HudPrintChannel.Chat,
+            $"{ZombieModSharp.Prefix} Current game mode is \x05Humans vs. Zombies\x01, the goal for zombies is to infect all humans by knifing them.");
     }
 
     public void OnRoundFreezeEnd()
     {
-        if(_modSharp.GetGameRules().IsWarmupPeriod && (!_cvarServices.CvarList["Cvar_InfectWarmupEnabled"]?.GetBool() ?? false))
+        if (_modSharp.GetGameRules().IsWarmupPeriod &&
+            (!_cvarServices.CvarList["Cvar_InfectWarmupEnabled"]?.GetBool() ?? false))
         {
             return;
         }
@@ -333,13 +347,13 @@ public class Infect : IInfect
         // gotta stop infection timer if still running.
         InfectStarted = false;
 
-        if(infectTimer != Guid.Empty)
+        if (infectTimer != Guid.Empty)
         {
             _modSharp.StopTimer(infectTimer);
             infectTimer = Guid.Empty;
         }
 
-        if(countdownTimer != Guid.Empty)
+        if (countdownTimer != Guid.Empty)
         {
             _modSharp.StopTimer(countdownTimer);
             countdownTimer = Guid.Empty;
@@ -357,19 +371,22 @@ public class Infect : IInfect
         }
 
         // Top defender, which we take from 3 client where they're actually do something with it.
-        var topDefender = allPlayers.OrderByDescending(p => p.Value.TotalDamage).Take(3).Where(p => p.Value.TotalDamage > 0).ToList();
-        var topInfect = allPlayers.OrderByDescending(p => p.Value.TotalInfect).Take(3).Where(p => p.Value.TotalInfect > 0).ToList();
+        var topDefender = allPlayers.OrderByDescending(p => p.Value.TotalDamage).Take(3)
+            .Where(p => p.Value.TotalDamage > 0).ToList();
+        var topInfect = allPlayers.OrderByDescending(p => p.Value.TotalInfect).Take(3)
+            .Where(p => p.Value.TotalInfect > 0).ToList();
 
         // Print to all player.
-        if(topDefender.Count > 0)
+        if (topDefender.Count > 0)
         {
             _modSharp.PrintToChatAll($" \x0C+++++++++++++++++ \x04[TOP DEFENDER] \x0C+++++++++++++++++");
-            for(int i = 0; i < topDefender.Count; i++)
+            for (int i = 0; i < topDefender.Count; i++)
             {
-                _modSharp.PrintToChatAll($" \x06{i+1}. {topDefender[i].Key.Name} - \x07{topDefender[i].Value.TotalDamage} DMG");
+                _modSharp.PrintToChatAll(
+                    $" \x06{i + 1}. {topDefender[i].Key.Name} - \x07{topDefender[i].Value.TotalDamage} DMG");
 
                 // we give them reward based on next round.
-                if(i < 2)
+                if (i < 2)
                 {
                     // extra grenade.
                     allPlayers[topDefender[i].Key].AllowExtraGrenade = true;
@@ -379,13 +396,14 @@ public class Infect : IInfect
             }
         }
 
-        if(topInfect.Count > 0)
+        if (topInfect.Count > 0)
         {
             // infector side
             _modSharp.PrintToChatAll($" \x10+++++++++++++++++ \x07[TOP INFECTOR] \x10+++++++++++++++++");
-            for(int i = 0; i < topInfect.Count; i++)
+            for (int i = 0; i < topInfect.Count; i++)
             {
-                _modSharp.PrintToChatAll($" \x09{i+1}. {topInfect[i].Key.Name} - \x07{topInfect[i].Value.TotalInfect} Infected");
+                _modSharp.PrintToChatAll(
+                    $" \x09{i + 1}. {topInfect[i].Key.Name} - \x07{topInfect[i].Value.TotalInfect} Infected");
             }
         }
     }
@@ -415,17 +433,17 @@ public class Infect : IInfect
 
             if (client.Team == CStrikeTeam.CT && isAlive)
             {
-                if(isAlive)
+                if (isAlive)
                     ctCount++;
-                
+
                 else
                     possibleZombieCount++;
             }
             else if (client.Team == CStrikeTeam.TE && isAlive)
             {
-                if(isAlive)
+                if (isAlive)
                     tCount++;
-                
+
                 else
                     possibleZombieCount++;
             }
@@ -436,7 +454,7 @@ public class Infect : IInfect
         float maxZombiesForScale = _cvarServices.CvarList["Cvar_InfectKnockbackDynamicScaleMaxZombie"]?.GetInt32() ?? 1;
         float maxKnockbackScale = _cvarServices.CvarList["Cvar_InfectKnockbackDynamicScale"]?.GetFloat() ?? 1.0f;
 
-        if(maxKnockbackScale > 1.0f)
+        if (maxKnockbackScale > 1.0f)
         {
             var zombieRatio = Math.Min(tCount + possibleZombieCount, maxZombiesForScale) / maxZombiesForScale;
             var dynamicKnockbackScale = 1.0f + zombieRatio * (maxKnockbackScale - 1.0f);
@@ -451,19 +469,22 @@ public class Infect : IInfect
             var team = _entityManager.GetGlobalCStrikeTeam(CStrikeTeam.TE);
             team?.Score += 1;
 
-            if(!string.IsNullOrEmpty(zombieOverlay))
+            if (!string.IsNullOrEmpty(zombieOverlay))
             {
                 foreach (var client in allClient)
                 {
                     var pawn = client.GetPlayerPawn();
 
-                    if(pawn == null)
+                    if (pawn == null)
                     {
                         continue;
                     }
-                    
-                    _particleManager.DispatchParticleEffect(zombieOverlay, ParticleAttachmentType.MainView, pawn, 0, true, new(client));
-                };
+
+                    _particleManager.DispatchParticleEffect(zombieOverlay, ParticleAttachmentType.MainView, pawn, 0,
+                        true, new(client));
+                }
+
+                ;
             }
         }
 
@@ -475,18 +496,22 @@ public class Infect : IInfect
             var team = _entityManager.GetGlobalCStrikeTeam(CStrikeTeam.CT);
             team?.Score += 1;
 
-            if(!string.IsNullOrEmpty(humanOverlay))
+            if (!string.IsNullOrEmpty(humanOverlay))
             {
                 foreach (var client in allClient)
                 {
                     var pawn = client.GetPlayerPawn();
 
-                    if(pawn == null)
+                    if (pawn == null)
                     {
                         continue;
                     }
-                    _particleManager.DispatchParticleEffect(humanOverlay, ParticleAttachmentType.MainView, pawn, 0, true, new(client));
-                };
+
+                    _particleManager.DispatchParticleEffect(humanOverlay, ParticleAttachmentType.MainView, pawn, 0,
+                        true, new(client));
+                }
+
+                ;
             }
         }
     }
@@ -495,13 +520,13 @@ public class Infect : IInfect
     {
         var timerCount = _cvarServices.CvarList["Cvar_InfectCountdown"]?.GetFloat() ?? 15.0f;
 
-        if(infectTimer != Guid.Empty)
+        if (infectTimer != Guid.Empty)
         {
             _modSharp.StopTimer(infectTimer);
             infectTimer = Guid.Empty;
         }
 
-        if(countdownTimer != Guid.Empty)
+        if (countdownTimer != Guid.Empty)
         {
             _modSharp.StopTimer(countdownTimer);
             countdownTimer = Guid.Empty;
@@ -513,7 +538,7 @@ public class Infect : IInfect
             {
                 if (!IsInfectStarted())
                     InfectMotherZombie();
-                    
+
                 return TimerAction.Continue;
             }
             catch (Exception e)
@@ -550,15 +575,17 @@ public class Infect : IInfect
 
     private void InfectMotherZombie()
     {
-        if(IsTestMode())
+        if (IsTestMode())
         {
-            _modSharp.PrintChannelAll(HudPrintChannel.Chat, $"{ZombieModSharp.Prefix} Mother Zombie infection is skipped because test mode is enabled.");
+            _modSharp.PrintChannelAll(HudPrintChannel.Chat,
+                $"{ZombieModSharp.Prefix} Mother Zombie infection is skipped because test mode is enabled.");
             return;
         }
 
         // Get All Player with motherzombie status, and alive.
         var candidate = _player.GetAllPlayers().Where(p => p.Value.MotherZombieStatus == MotherZombieStatus.None
-            && (p.Key.GetPlayerController()?.GetPlayerPawn()?.IsAlive ?? false) && p.Value.MotherZombieImmune == false);
+                                                           && (p.Key.GetPlayerController()?.GetPlayerPawn()?.IsAlive ??
+                                                               false) && p.Value.MotherZombieImmune == false);
 
         // we could just use all player and count them but this sometime unfair for player who has to fight for spectator
         var totalPlayer = _player.GetAllPlayers().Where(p => p.Key.GetPlayerController()?.IsAlive ?? false).Count();
@@ -585,7 +612,8 @@ public class Infect : IInfect
                     // we count how many mother zombie is made.
                     made++;
 
-                    if(player.Key.GetPlayerController()?.Team == CStrikeTeam.Spectator || player.Key.GetPlayerController()?.Team == CStrikeTeam.UnAssigned)
+                    if (player.Key.GetPlayerController()?.Team == CStrikeTeam.Spectator ||
+                        player.Key.GetPlayerController()?.Team == CStrikeTeam.UnAssigned)
                         continue;
 
                     InfectPlayer(player.Key, null, true, false);
@@ -596,14 +624,16 @@ public class Infect : IInfect
             }
 
             // at the end of the round chosen mother zombie will get reset to Last. so we reset it.
-            foreach (var player in _player.GetAllPlayers().Where(p => p.Value.MotherZombieStatus == MotherZombieStatus.Last))
+            foreach (var player in _player.GetAllPlayers()
+                         .Where(p => p.Value.MotherZombieStatus == MotherZombieStatus.Last))
             {
                 player.Value.MotherZombieStatus = MotherZombieStatus.None;
             }
 
             // getting candidate again.
             candidate = _player.GetAllPlayers().Where(p => p.Value.MotherZombieStatus == MotherZombieStatus.None
-                && (p.Key.GetPlayerController()?.IsAlive ?? false) && p.Value.MotherZombieImmune == false);
+                                                           && (p.Key.GetPlayerController()?.IsAlive ?? false) &&
+                                                           p.Value.MotherZombieImmune == false);
 
             // tell them that we have reset cycle.
             _modSharp.PrintChannelAll(HudPrintChannel.Chat, $"{ZombieModSharp.Prefix} Mother Zombie has been reset.");
@@ -616,23 +646,29 @@ public class Infect : IInfect
         // random and shuffle them
         var random = new Random();
         var shuffledCandidates = candidate.OrderBy(x => random.Next()).ToList();
-        var selectedMotherZombies = shuffledCandidates.Take(requireZm - made); // take from the started. and it should deducted with already made zombie count.
+        var selectedMotherZombies =
+            shuffledCandidates.Take(requireZm -
+                                    made); // take from the started. and it should deducted with already made zombie count.
 
         // loop again.
         foreach (var player in selectedMotherZombies)
         {
-            if(player.Key.GetPlayerController()?.Team == CStrikeTeam.Spectator || player.Key.GetPlayerController()?.Team == CStrikeTeam.UnAssigned)
+            if (player.Key.GetPlayerController()?.Team == CStrikeTeam.Spectator ||
+                player.Key.GetPlayerController()?.Team == CStrikeTeam.UnAssigned)
                 continue;
-                
+
             InfectPlayer(player.Key, null, true, false);
             player.Value.MotherZombieStatus = MotherZombieStatus.Chosen;
         }
 
-        foreach (var player in _player.GetAllPlayers().Where(p => p.Value.MotherZombieImmune || p.Value.AllowExtraGrenade))
+        foreach (var player in _player.GetAllPlayers()
+                     .Where(p => p.Value.MotherZombieImmune || p.Value.AllowExtraGrenade))
         {
-            if(player.Value.MotherZombieImmune)
+            if (player.Value.MotherZombieImmune)
             {
-                _modSharp.PrintChannelFilter(HudPrintChannel.Chat, $"{ZombieModSharp.Prefix} You have mother zombie immunity from top defender!", new RecipientFilter(player.Key));
+                _modSharp.PrintChannelFilter(HudPrintChannel.Chat,
+                    $"{ZombieModSharp.Prefix} You have mother zombie immunity from top defender!",
+                    new RecipientFilter(player.Key));
                 player.Value.MotherZombieImmune = false;
             }
 
@@ -650,7 +686,8 @@ public class Infect : IInfect
         return _player.GetOrCreatePlayer(client).IsHuman();
     }
 
-    public EHookAction? ZMS_OnClientInfect(IGameClient client, IGameClient? attacker = null, bool motherzombie = false, bool force = false)
+    public EHookAction? ZMS_OnClientInfect(IGameClient client, IGameClient? attacker = null, bool motherzombie = false,
+        bool force = false)
     {
         return OnClientInfect?.Invoke(client, attacker, motherzombie, force);
     }

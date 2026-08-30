@@ -28,45 +28,43 @@ public class RespawnServices : IRespawnServices
 
     public void InitRespawn(IPlayerController? client)
     {
-        if(client == null)
+        if (client == null)
         {
             return;
         }
 
-        if(!RespawnEnabled)
+        if (!RespawnEnabled)
         {
             return;
         }
 
         var delay = _cvarServices.CvarList["Cvar_RespawnDelay"]?.GetFloat() ?? 5.0f;
 
-        _modsharp.PushTimer(() =>
-        {
-            RespawnClient(client);
-
-        }, delay, GameTimerFlags.StopOnRoundEnd|GameTimerFlags.StopOnMapEnd);
+        _modsharp.PushTimer(() => { RespawnClient(client); }, delay,
+            GameTimerFlags.StopOnRoundEnd | GameTimerFlags.StopOnMapEnd);
     }
 
     public void RespawnClient(IPlayerController client)
     {
-        if(!RespawnEnabled)
+        if (!RespawnEnabled)
         {
             return;
         }
 
         var playerPawn = client.GetPlayerPawn();
 
-        if(playerPawn == null)
+        if (playerPawn == null)
         {
             return;
         }
 
-        if(playerPawn.IsAlive)
+        if (playerPawn.IsAlive)
         {
             return;
         }
 
-        if(playerPawn.Team == CStrikeTeam.Spectator || playerPawn.Team == CStrikeTeam.UnAssigned || client.Team == CStrikeTeam.Spectator || client.Team == CStrikeTeam.UnAssigned)
+        if (playerPawn.Team == CStrikeTeam.Spectator || playerPawn.Team == CStrikeTeam.UnAssigned ||
+            client.Team == CStrikeTeam.Spectator || client.Team == CStrikeTeam.UnAssigned)
         {
             return;
         }

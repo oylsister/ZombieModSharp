@@ -15,7 +15,8 @@ public class Configs : IConfigs
 
     private static string configPath = string.Empty;
 
-    public Configs(ISharedSystem sharedSystem, ILogger<Configs> logger, IWeapons weapons, IHitGroup hitGroup, IPrecacheManager precacheManager, IPlayerClasses playerClasses)
+    public Configs(ISharedSystem sharedSystem, ILogger<Configs> logger, IWeapons weapons, IHitGroup hitGroup,
+        IPrecacheManager precacheManager, IPlayerClasses playerClasses)
     {
         _sharedSystem = sharedSystem;
         _logger = logger;

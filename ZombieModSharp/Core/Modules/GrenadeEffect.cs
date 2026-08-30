@@ -27,12 +27,12 @@ public class GrenadeEffect : IGrenadeEffect
 
     public bool IgnitePawn(IPlayerPawn? playerPawn, int damage = 1, float duration = 1)
     {
-        if(playerPawn == null)
+        if (playerPawn == null)
             return false;
 
         var particle = _entityManager.FindEntityByHandle(playerPawn.EffectEntityHandle)?.As<IBaseParticle>();
 
-        if(particle != null)
+        if (particle != null)
         {
             particle.DissolveStartTime = _modsharp.GetGlobals().CurTime + duration;
             return true;
@@ -45,10 +45,10 @@ public class GrenadeEffect : IGrenadeEffect
         };
 
         particle = _entityManager.SpawnEntitySync<IBaseParticle>("info_particle_system", kv);
-        
-        try 
+
+        try
         {
-            if(particle == null)
+            if (particle == null)
             {
                 //_modsharp.PrintToChatAll("Is fucking null");
                 return false;
@@ -63,21 +63,21 @@ public class GrenadeEffect : IGrenadeEffect
 
             playerPawn.EffectEntityHandle = particle.Handle;
 
-            _modsharp.PushTimer(new Func<TimerAction>(() => 
+            _modsharp.PushTimer(new Func<TimerAction>(() =>
             {
-                if(playerPawn == null || !playerPawn.IsValid())
+                if (playerPawn == null || !playerPawn.IsValid())
                     return TimerAction.Stop;
 
-                if(particle == null || !particle.IsValidEntity)
+                if (particle == null || !particle.IsValidEntity)
                     return TimerAction.Stop;
 
-                if(!particle.Classname.StartsWith("info_part"))
+                if (!particle.Classname.StartsWith("info_part"))
                 {
                     _logger.LogError("Unexpceted entity is found in particle.");
                     return TimerAction.Stop;
                 }
 
-                if(particle.DissolveStartTime <= _modsharp.GetGlobals().CurTime || !playerPawn.IsAlive)
+                if (particle.DissolveStartTime <= _modsharp.GetGlobals().CurTime || !playerPawn.IsAlive)
                 {
                     particle.AcceptInput("Stop");
                     particle.AddIOEvent(0.1f, "Kill");
@@ -87,7 +87,7 @@ public class GrenadeEffect : IGrenadeEffect
                 ApplyDamage(playerPawn, damage);
                 playerPawn.VelocityModifier = 40.0f / 100.0f;
                 return TimerAction.Continue;
-            }), 0.5, GameTimerFlags.Repeatable|GameTimerFlags.StopOnRoundEnd|GameTimerFlags.StopOnMapEnd);
+            }), 0.5, GameTimerFlags.Repeatable | GameTimerFlags.StopOnRoundEnd | GameTimerFlags.StopOnMapEnd);
         }
         catch (Exception ex)
         {
@@ -102,7 +102,7 @@ public class GrenadeEffect : IGrenadeEffect
     {
         var activeWeapon = playerPawn.GetActiveWeapon();
 
-        var info = new TakeDamageInfo (playerPawn)
+        var info = new TakeDamageInfo(playerPawn)
         {
             Inflictor = activeWeapon!.Handle,
             Ability = activeWeapon.Handle,
@@ -116,33 +116,30 @@ public class GrenadeEffect : IGrenadeEffect
 
     public void ApplyFreeze(IBaseEntity grenade, float distanceLimit, float duration)
     {
-        if(grenade == null || !grenade.IsValid())
+        if (grenade == null || !grenade.IsValid())
             return;
-            
+
         var grenadePos = grenade.GetAbsOrigin();
 
         EmitFreezeEffect(grenadePos);
 
-        foreach(var client in _playerManager.GetAllPlayers().Where(p => p.Value.IsInfected()))
+        foreach (var client in _playerManager.GetAllPlayers().Where(p => p.Value.IsInfected()))
         {
             var pawn = client.Key.GetPlayerController()?.GetPlayerPawn();
 
-            if(pawn == null || !pawn.IsAlive)
+            if (pawn == null || !pawn.IsAlive)
                 continue;
 
             var pos = pawn.GetAbsOrigin();
 
             var distance = GetDistance(grenadePos, pos);
 
-            if(distance <= distanceLimit)
+            if (distance <= distanceLimit)
             {
                 pawn.SetMoveType(MoveType.None);
                 pawn.Teleport();
 
-                _modsharp.PushTimer(() =>
-                {
-                    pawn.SetMoveType(MoveType.Walk);
-                }, duration, GameTimerFlags.StopOnMapEnd);
+                _modsharp.PushTimer(() => { pawn.SetMoveType(MoveType.Walk); }, duration, GameTimerFlags.StopOnMapEnd);
             }
         }
 
@@ -152,7 +149,7 @@ public class GrenadeEffect : IGrenadeEffect
 
     public void ApplyLightGrenade(IBaseEntity grenade, float duration)
     {
-        if(grenade == null || !grenade.IsValid())
+        if (grenade == null || !grenade.IsValid())
             return;
 
         var pos = grenade.GetAbsOrigin();

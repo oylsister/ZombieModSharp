@@ -33,7 +33,9 @@ public class Command : ICommand
 
     private IAdminCommandRegistry? _adminManager;
 
-    public Command(IPlayerManager playerManager, IZTele ztele, IInfect infect, ISharedSystem sharedSystem, ICommandManager command, ICvarServices cvarServices, IGrenadeEffect grenadeEffect, ILeaderServices leader, IGlowServices glowServices, IMarkerServices markerServices, IPlayerClasses playerClasses)
+    public Command(IPlayerManager playerManager, IZTele ztele, IInfect infect, ISharedSystem sharedSystem,
+        ICommandManager command, ICvarServices cvarServices, IGrenadeEffect grenadeEffect, ILeaderServices leader,
+        IGlowServices glowServices, IMarkerServices markerServices, IPlayerClasses playerClasses)
     {
         _playerManager = playerManager;
         _ztele = ztele;
@@ -75,7 +77,8 @@ public class Command : ICommand
 
             if (!trace.DidHit()) return [];
 
-            if (_shared.GetEntityManager().MakeEntityFromPointer<IPlayerPawn>(trace.Entity) is not { IsPlayerPawn: true } tracePawn)
+            if (_shared.GetEntityManager().MakeEntityFromPointer<IPlayerPawn>(trace.Entity) is not
+                { IsPlayerPawn: true } tracePawn)
                 return [];
 
             if (tracePawn.GetControllerAuto() is not { IsValidEntity: true } traceController)
@@ -151,19 +154,19 @@ public class Command : ICommand
             return;
         }
 
-        if(!pawn.IsAlive)
+        if (!pawn.IsAlive)
         {
             ReplyToCommand(client, "You need to be alive to use this command!");
             return;
         }
 
-        if(_infect.IsClientInfect(client))
+        if (_infect.IsClientInfect(client))
         {
             ReplyToCommand(client, "Zombies can't buy kevlar!");
             return;
         }
 
-        if(pawn.ArmorValue >= 100)
+        if (pawn.ArmorValue >= 100)
         {
             ReplyToCommand(client, "You already have full kevlar!");
             return;
@@ -209,6 +212,7 @@ public class Command : ICommand
 
         _leaderServices.VoteLeader(client, target);
     }
+
     public void OnGlowCommand(IGameClient? client, StringCommand command)
     {
         if (client == null || !client.IsValid) return;
@@ -228,6 +232,7 @@ public class Command : ICommand
             ReplyToCommand(client, "Can't find any player controller");
             return;
         }
+
         var pawn = controller.GetPlayerPawn();
 
         if (pawn == null)
@@ -248,7 +253,6 @@ public class Command : ICommand
         );
 
         ReplyToCommand(client, $"{controller.PlayerName} Glow.");
-        
     }
 
     public void OnDisableGlowCommand(IGameClient? client, StringCommand command)
@@ -264,6 +268,7 @@ public class Command : ICommand
             ReplyToCommand(client, "Can't find any player");
             return;
         }
+
         var controller = target.GetPlayerController();
         if (controller == null || !controller.IsValid())
         {
@@ -273,8 +278,8 @@ public class Command : ICommand
 
         _glowServices.DisablePlayerGlow(controller);
         ReplyToCommand(client, $"Player {controller.PlayerName} disable glow!");
-        
     }
+
     private void OnMarkerCommand(IGameClient? client, StringCommand command)
     {
         if (client == null || !client.IsValid) return;
@@ -331,29 +336,29 @@ public class Command : ICommand
 
         var arg = command.GetArg(1);
         var target = GetTargets(client, arg).FirstOrDefault();
-        
+
         if (target == null || !target.IsValid)
         {
-            ReplyToCommand(client,"Can't find any player");
+            ReplyToCommand(client, "Can't find any player");
             return;
         }
 
         var target_controller = target.GetPlayerController();
         if (target_controller == null || !target_controller.IsValid())
         {
-            ReplyToCommand(client,"Can't find any player controller");
+            ReplyToCommand(client, "Can't find any player controller");
             return;
         }
 
         if (_leaderServices.IsClientLeader(target_controller))
         {
-            ReplyToCommand(client,$"{target.Name} is already a leader.");
+            ReplyToCommand(client, $"{target.Name} is already a leader.");
             return;
         }
 
         if (_leaderServices.AssignLeader(target_controller))
         {
-            ReplyToCommand(client,$"{target_controller.GetGameClient()?.Name} is leader now.");
+            ReplyToCommand(client, $"{target_controller.GetGameClient()?.Name} is leader now.");
 
             target_controller.SetClanTag(" [Leader]  ");
             _leaderServices.UpdateClientClanTags();
@@ -372,9 +377,8 @@ public class Command : ICommand
         }
         else
         {
-            ReplyToCommand(client,$"Failed to assign leader to {target_controller.PlayerName}");
+            ReplyToCommand(client, $"Failed to assign leader to {target_controller.PlayerName}");
         }
-        
     }
 
     public void OnQuitLeaderCommand(IGameClient? client, StringCommand command)
@@ -418,8 +422,6 @@ public class Command : ICommand
         {
             ReplyToCommand(client, $"Failed to quit leader for {target_controller.PlayerName}");
         }
-
-        
     }
 
     private void ZTeleCommand(IGameClient client, StringCommand command)
@@ -428,10 +430,10 @@ public class Command : ICommand
 
         if (client == null || playerInfo == null)
             return;
-        
+
         var allow = _cvarServices.CvarList["Cvar_ZTeleAllow"]?.GetBool();
 
-        if(allow.HasValue && !allow.Value)
+        if (allow.HasValue && !allow.Value)
         {
             ReplyToCommand(client, "This feature is not available.");
             return;
@@ -439,14 +441,14 @@ public class Command : ICommand
 
         var delay = _cvarServices.CvarList["Cvar_ZTeleDelay"]?.GetFloat();
 
-        if(delay > 0)
+        if (delay > 0)
         {
             ReplyToCommand(client, $"Teleport back to spawn in {delay} seconds.");
-            _modsharp.PushTimer(new Func<TimerAction>(() => 
+            _modsharp.PushTimer(new Func<TimerAction>(() =>
             {
                 _ztele.TeleportToSpawn(client);
                 return TimerAction.Continue;
-            }), delay.Value, GameTimerFlags.StopOnRoundEnd|GameTimerFlags.StopOnMapEnd);
+            }), delay.Value, GameTimerFlags.StopOnRoundEnd | GameTimerFlags.StopOnMapEnd);
         }
         else
         {
@@ -464,7 +466,8 @@ public class Command : ICommand
             return;
         }
 
-        if(_modsharp.GetGameRules().IsWarmupPeriod && (!_cvarServices.CvarList["Cvar_InfectWarmupEnabled"]?.GetBool() ?? false))
+        if (_modsharp.GetGameRules().IsWarmupPeriod &&
+            (!_cvarServices.CvarList["Cvar_InfectWarmupEnabled"]?.GetBool() ?? false))
         {
             ReplyToCommand(client, "The infection during the warmup is not available.");
             return;
@@ -490,7 +493,8 @@ public class Command : ICommand
         foreach (var player in target)
         {
             _infect.InfectPlayer(player, null, motherzombie, true);
-            _modsharp.PrintChannelAll(HudPrintChannel.Chat, $"{ZombieModSharp.Prefix} Admin {client?.Name} has infected {player.Name} via command");
+            _modsharp.PrintChannelAll(HudPrintChannel.Chat,
+                $"{ZombieModSharp.Prefix} Admin {client?.Name} has infected {player.Name} via command");
         }
 
         return;
@@ -516,7 +520,8 @@ public class Command : ICommand
         foreach (var player in target)
         {
             _infect.HumanizeClient(player, true);
-            _modsharp.PrintChannelAll(HudPrintChannel.Chat, $"{ZombieModSharp.Prefix} Admin {client?.Name} has revived {player.Name} via command");
+            _modsharp.PrintChannelAll(HudPrintChannel.Chat,
+                $"{ZombieModSharp.Prefix} Admin {client?.Name} has revived {player.Name} via command");
         }
 
         return;
@@ -527,7 +532,7 @@ public class Command : ICommand
         var player = _playerManager.GetOrCreatePlayer(client);
         var volume = player.SoundVolume;
 
-        if(command.ArgCount < 1)
+        if (command.ArgCount < 1)
         {
             player.SoundEnabled = !player.SoundEnabled;
             // _modsharp.PrintToChatAll("This shit is not even one");
@@ -538,13 +543,13 @@ public class Command : ICommand
             var arg = command.GetArg(1);
 
             // we need to check if arg is number or not.
-            if(!int.TryParse(arg, out volume))
+            if (!int.TryParse(arg, out volume))
             {
                 // we just keep the same value.
                 volume = player.SoundVolume;
             }
 
-            if(volume < 0 || volume > 100)
+            if (volume < 0 || volume > 100)
             {
                 ReplyToCommand(client, $"Usage: ms_zsound <0-100>");
                 return;
@@ -554,11 +559,14 @@ public class Command : ICommand
         }
 
         var preferences = _sharedSystem.GetSharpModuleManager()
-                                       .GetRequiredSharpModuleInterface<IClientPreference>(IClientPreference.Identity)
-                                       .Instance!;
-        preferences.SetCookie(client.SteamId, global::ZombieModSharp.ZombieModSharp.SoundEnabledCookieKey, player.SoundEnabled.ToString());
-        preferences.SetCookie(client.SteamId, global::ZombieModSharp.ZombieModSharp.SoundVolumeCookieKey, player.SoundVolume.ToString());
-        ReplyToCommand(client, $"You have{(player.SoundEnabled ? "\x05 Enabled" : "\x07 Disabled")}\x01 zombie sound. {(player.SoundEnabled ? $"And set volume to\x06 {player.SoundVolume}" : string.Empty)}");
+            .GetRequiredSharpModuleInterface<IClientPreference>(IClientPreference.Identity)
+            .Instance!;
+        preferences.SetCookie(client.SteamId, global::ZombieModSharp.ZombieModSharp.SoundEnabledCookieKey,
+            player.SoundEnabled.ToString());
+        preferences.SetCookie(client.SteamId, global::ZombieModSharp.ZombieModSharp.SoundVolumeCookieKey,
+            player.SoundVolume.ToString());
+        ReplyToCommand(client,
+            $"You have{(player.SoundEnabled ? "\x05 Enabled" : "\x07 Disabled")}\x01 zombie sound. {(player.SoundEnabled ? $"And set volume to\x06 {player.SoundVolume}" : string.Empty)}");
     }
 
     private void ZClassCommand(IGameClient client, StringCommand command)
@@ -568,29 +576,31 @@ public class Command : ICommand
 
     private void ToggleRespawnCommand(IGameClient? client, StringCommand command)
     {
-        if(command.ArgCount < 1)
+        if (command.ArgCount < 1)
         {
             var enabled = RespawnServices.IsRespawnEnabled();
             RespawnServices.SetRespawnEnable(!enabled);
 
-            _modsharp.PrintToChatAll($"{ZombieModSharp.Prefix} Respawn has been{(!enabled ? "\x07 Disabled" : "\x05 Enabled")}");
+            _modsharp.PrintToChatAll(
+                $"{ZombieModSharp.Prefix} Respawn has been{(!enabled ? "\x07 Disabled" : "\x05 Enabled")}");
             return;
         }
 
-        if(!int.TryParse(command.GetArg(1), out var arg))
+        if (!int.TryParse(command.GetArg(1), out var arg))
         {
             ReplyToCommand(client, "Usage ms_togglerespawn <0-1>");
             return;
         }
 
-        if(arg > 1 || arg < 0)
+        if (arg > 1 || arg < 0)
         {
             ReplyToCommand(client, "Usage ms_togglerespawn <0-1>");
             return;
         }
 
         RespawnServices.SetRespawnEnable(Convert.ToBoolean(arg));
-        _modsharp.PrintToChatAll($"{ZombieModSharp.Prefix} Respawn has been{(Convert.ToBoolean(arg) ? "\x05 Enabled" : "\x07 Disabled")}");
+        _modsharp.PrintToChatAll(
+            $"{ZombieModSharp.Prefix} Respawn has been{(Convert.ToBoolean(arg) ? "\x05 Enabled" : "\x07 Disabled")}");
     }
 
     private void BurnTestCommand(IGameClient? client, StringCommand command)
@@ -782,8 +792,8 @@ public class Command : ICommand
             return;
         }
 
-        if(controller.Team == CStrikeTeam.Spectator || controller.Team == CStrikeTeam.UnAssigned)
-         {
+        if (controller.Team == CStrikeTeam.Spectator || controller.Team == CStrikeTeam.UnAssigned)
+        {
             ReplyToCommand(client, "You can't use this command in spectator!");
             return;
         }
@@ -796,13 +806,13 @@ public class Command : ICommand
             return;
         }
 
-        if(pawn.IsAlive)
+        if (pawn.IsAlive)
         {
             ReplyToCommand(client, "You need to be dead to use this command!");
             return;
         }
 
-        if(!RespawnServices.IsRespawnEnabled())
+        if (!RespawnServices.IsRespawnEnabled())
         {
             ReplyToCommand(client, "Respawn has been disabled.");
             return;
@@ -832,7 +842,8 @@ public class Command : ICommand
         }
 
         _infect.SetTestMode(arg == 1);
-        ReplyToCommand(client, $"Admin {client?.Name} has{(arg == 1 ? "\x05 Enabled" : "\x07 Disabled")} \x01Test mode.");
+        ReplyToCommand(client,
+            $"Admin {client?.Name} has{(arg == 1 ? "\x05 Enabled" : "\x07 Disabled")} \x01Test mode.");
     }
 
     public void ReplyToCommand(IGameClient? client, string text)

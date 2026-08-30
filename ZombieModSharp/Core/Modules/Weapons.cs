@@ -43,7 +43,8 @@ public class Weapons : IWeapons
     private Dictionary<string, WeaponData> weaponDatas = [];
     private readonly Dictionary<string, int> _grenadeAmmoIndexes = [];
 
-    public Weapons(ISharedSystem sharedSystem, ILogger<Weapons> logger, ICommandManager commandManager, IPlayerManager playerManager)
+    public Weapons(ISharedSystem sharedSystem, ILogger<Weapons> logger, ICommandManager commandManager,
+        IPlayerManager playerManager)
     {
         _sharedSystem = sharedSystem;
         _logger = _sharedSystem.GetLoggerFactory().CreateLogger<Weapons>();
@@ -69,10 +70,10 @@ public class Weapons : IWeapons
         try
         {
             var jsonContent = File.ReadAllText(configPath);
-            
+
             // Simple comment removal (basic implementation)
             var lines = jsonContent.Split('\n');
-            var cleanedLines = lines.Select(line => 
+            var cleanedLines = lines.Select(line =>
             {
                 var commentIndex = line.IndexOf("//", StringComparison.Ordinal);
                 return commentIndex >= 0 ? line.Substring(0, commentIndex) : line;
@@ -91,15 +92,15 @@ public class Weapons : IWeapons
 
     private void AssignWeaponPurchaseCommand()
     {
-        if(weaponDatas == null || weaponDatas.Count <= 0)
+        if (weaponDatas == null || weaponDatas.Count <= 0)
             return;
 
-        foreach(var weapon in weaponDatas)
+        foreach (var weapon in weaponDatas)
         {
-            if(weapon.Value.Command == null || weapon.Value.Command.Count <= 0)
+            if (weapon.Value.Command == null || weapon.Value.Command.Count <= 0)
                 continue;
 
-            foreach(var command in weapon.Value.Command)
+            foreach (var command in weapon.Value.Command)
             {
                 _commandManager.RegisterClientCommand(command, OnPurchaseWeaponCommand);
                 //_logger.LogInformation("Assigned Command {command}", command);
@@ -112,7 +113,7 @@ public class Weapons : IWeapons
         var arg = command.CommandName;
         var weaponData = weaponDatas.FirstOrDefault(w => w.Value.Command.Contains(arg)).Value;
 
-        if(weaponData == null)
+        if (weaponData == null)
         {
             PrintToChat(client, "Invalid weapon command!");
             return;
@@ -127,66 +128,70 @@ public class Weapons : IWeapons
         var pawn = controller?.GetPlayerPawn();
         var player = _playerManager.GetOrCreatePlayer(client);
 
-        if(weapon.Restrict)
+        if (weapon.Restrict)
         {
             PrintToChat(client, $"Weapon \x05{weapon.WeaponName}\x01 is restricted");
             return;
         }
 
-        if(pawn == null || controller == null)
+        if (pawn == null || controller == null)
         {
             return;
         }
 
-        if(pawn.Team <= CStrikeTeam.Spectator)
+        if (pawn.Team <= CStrikeTeam.Spectator)
         {
             PrintToChat(client, "This feature require player to be in team.");
             return;
         }
 
-        if(!pawn.IsAlive)
+        if (!pawn.IsAlive)
         {
             PrintToChat(client, "This feature require player to be alive.");
             return;
         }
 
-        if(player.IsInfected())
+        if (player.IsInfected())
         {
             PrintToChat(client, "This feautre require player to be human.");
             return;
         }
 
-        if(weapon.MaxPurchase == -1)
+        if (weapon.MaxPurchase == -1)
         {
-            PrintToChat(client, $"Weapon \x05{weapon.WeaponName}\x01 is restricted for purchasing, and only can be obtained in the map.");
+            PrintToChat(client,
+                $"Weapon \x05{weapon.WeaponName}\x01 is restricted for purchasing, and only can be obtained in the map.");
             return;
         }
 
-        if(weapon.MaxPurchase > 0)
+        if (weapon.MaxPurchase > 0)
         {
-            if(player.PurchaseHistory.TryGetValue(weapon.WeaponName, out var weaponData) && weaponData >= weapon.MaxPurchase)
+            if (player.PurchaseHistory.TryGetValue(weapon.WeaponName, out var weaponData) &&
+                weaponData >= weapon.MaxPurchase)
             {
-                PrintToChat(client, $"Your purchase of weapon \x05{weapon.WeaponName}\x01 has reached maximum number that allow this round.");
+                PrintToChat(client,
+                    $"Your purchase of weapon \x05{weapon.WeaponName}\x01 has reached maximum number that allow this round.");
                 return;
             }
         }
 
         var money = controller.GetInGameMoneyService()?.Account;
 
-        if(money < weapon.Price)
+        if (money < weapon.Price)
         {
             PrintToChat(client, $"You don't have enough cash for purchasing this weapon! (Price: {weapon.Price}$)");
             return;
         }
 
-        if(weapon.EntityName == "item_assaultsuit")
+        if (weapon.EntityName == "item_assaultsuit")
         {
             var armor = pawn.ArmorValue;
-            
-            if(armor < 100)
+
+            if (armor < 100)
             {
                 pawn.GiveNamedItem(EconItemId.AssaultSuit);
-                PrintToChat(client, $"You have purchased weapon \x05{weapon.WeaponName}\x01. {(weapon.MaxPurchase > 0 ? $"Purchases available left: ({weapon.MaxPurchase - player.PurchaseHistory[weapon.WeaponName]}/{weapon.MaxPurchase})" : "")}");
+                PrintToChat(client,
+                    $"You have purchased weapon \x05{weapon.WeaponName}\x01. {(weapon.MaxPurchase > 0 ? $"Purchases available left: ({weapon.MaxPurchase - player.PurchaseHistory[weapon.WeaponName]}/{weapon.MaxPurchase})" : "")}");
                 return;
             }
 
@@ -198,31 +203,31 @@ public class Weapons : IWeapons
         }
 
         // force drop weapon mostly.
-        if(weapon.WeaponSlot <= (int)GearSlot.Pistol)
+        if (weapon.WeaponSlot <= (int)GearSlot.Pistol)
         {
             var ent = pawn.GetWeaponBySlot((GearSlot)weapon.WeaponSlot);
 
-            if(ent != null)
+            if (ent != null)
             {
                 pawn.DropWeapon(ent);
                 _modsharp.PushTimer(() =>
                 {
-                    if(ent != null && ent.IsValid())
+                    if (ent != null && ent.IsValid())
                         ent.AcceptInput("Kill");
                 }, 0.02f);
             }
         }
 
-        else if(weapon.WeaponSlot == (int)GearSlot.Grenades)
+        else if (weapon.WeaponSlot == (int)GearSlot.Grenades)
         {
             var carriedGrenade = GetCarriedGrenade(pawn, weapon);
 
-            if(carriedGrenade != null)
+            if (carriedGrenade != null)
             {
                 var stackLimit = GetGrenadeStackLimit();
                 var carriedCount = Math.Max(GetVisibleGrenadeStack(pawn, weapon.EntityName), 1);
 
-                if(carriedCount >= stackLimit)
+                if (carriedCount >= stackLimit)
                 {
                     PrintToChat(client, $"You already carried the maximum stack of \x05{weapon.WeaponName}\x01.");
                     return;
@@ -237,16 +242,17 @@ public class Weapons : IWeapons
 
         int[]? ammoBefore = null;
 
-        if(weapon.WeaponSlot == (int)GearSlot.Grenades)
+        if (weapon.WeaponSlot == (int)GearSlot.Grenades)
             ammoBefore = SnapshotAmmo(pawn);
 
         ChargeAndTrackPurchase(controller, player, weapon);
         pawn.GiveNamedItem(weapon.EntityName);
 
-        if(weapon.WeaponSlot == (int)GearSlot.Grenades)
+        if (weapon.WeaponSlot == (int)GearSlot.Grenades)
         {
             DetectGrenadeAmmoIndex(pawn, weapon.EntityName, ammoBefore);
-            SetVisibleGrenadeStack(pawn, weapon.EntityName, Math.Max(GetVisibleGrenadeStack(pawn, weapon.EntityName), 1));
+            SetVisibleGrenadeStack(pawn, weapon.EntityName,
+                Math.Max(GetVisibleGrenadeStack(pawn, weapon.EntityName), 1));
         }
 
         PrintPurchaseMessage(client, player, weapon);
@@ -257,15 +263,15 @@ public class Weapons : IWeapons
         var pawn = client.GetPlayerController()?.GetPlayerPawn();
         var entityName = GetGrenadeEntityName(weaponEntityName);
 
-        if(pawn == null || entityName == null || !pawn.IsAlive)
+        if (pawn == null || entityName == null || !pawn.IsAlive)
             return false;
 
-        if(GetCarriedGrenade(pawn, entityName) == null)
+        if (GetCarriedGrenade(pawn, entityName) == null)
             return false;
 
         var current = Math.Max(GetVisibleGrenadeStack(pawn, entityName), 1);
 
-        if(current >= GetGrenadeStackLimit())
+        if (current >= GetGrenadeStackLimit())
             return false;
 
         SetVisibleGrenadeStack(pawn, entityName, current + 1);
@@ -298,8 +304,8 @@ public class Weapons : IWeapons
     public WeaponData GetWeaponDataWithEntityName(string weaponentity)
     {
         var result = weaponDatas.FirstOrDefault(p => p.Key == weaponentity
-            || p.Value.EntityName == weaponentity
-            || p.Value.EntityName == $"weapon_{weaponentity}").Value;
+                                                     || p.Value.EntityName == weaponentity
+                                                     || p.Value.EntityName == $"weapon_{weaponentity}").Value;
         return result;
     }
 
@@ -313,21 +319,21 @@ public class Weapons : IWeapons
         var weapons = pawn.GetWeaponService()?.GetMyWeapons();
         var itemDefinitionIndex = GetGrenadeItemDefinitionIndex(entityName);
 
-        if(weapons == null)
+        if (weapons == null)
             return null;
 
-        foreach(var item in weapons)
+        foreach (var item in weapons)
         {
-            if(_entityManager.FindEntityByHandle(item)?.AsBaseWeapon() is not { } weapon)
+            if (_entityManager.FindEntityByHandle(item)?.AsBaseWeapon() is not { } weapon)
                 continue;
 
-            if(weapon == null)
+            if (weapon == null)
                 continue;
 
-            if(weapon.Classname == entityName)
+            if (weapon.Classname == entityName)
                 return weapon;
 
-            if(itemDefinitionIndex.HasValue && weapon.ItemDefinitionIndex == itemDefinitionIndex.Value)
+            if (itemDefinitionIndex.HasValue && weapon.ItemDefinitionIndex == itemDefinitionIndex.Value)
                 return weapon;
         }
 
@@ -348,12 +354,12 @@ public class Weapons : IWeapons
     {
         var ammo = pawn.GetWeaponService()?.GetAmmo();
 
-        if(ammo == null)
+        if (ammo == null)
             return null;
 
         var snapshot = new int[ammo.Size];
 
-        for(var i = 0; i < ammo.Size; i++)
+        for (var i = 0; i < ammo.Size; i++)
             snapshot[i] = ammo[i];
 
         return snapshot;
@@ -361,19 +367,19 @@ public class Weapons : IWeapons
 
     private void DetectGrenadeAmmoIndex(IPlayerPawn pawn, string entityName, int[]? ammoBefore)
     {
-        if(ammoBefore == null || _grenadeAmmoIndexes.ContainsKey(entityName))
+        if (ammoBefore == null || _grenadeAmmoIndexes.ContainsKey(entityName))
             return;
 
         var ammo = pawn.GetWeaponService()?.GetAmmo();
 
-        if(ammo == null)
+        if (ammo == null)
             return;
 
         var length = Math.Min(ammo.Size, ammoBefore.Length);
 
-        for(var i = 0; i < length; i++)
+        for (var i = 0; i < length; i++)
         {
-            if(ammo[i] > ammoBefore[i])
+            if (ammo[i] > ammoBefore[i])
             {
                 _grenadeAmmoIndexes[entityName] = i;
                 return;
@@ -386,7 +392,7 @@ public class Weapons : IWeapons
         var index = GetGrenadeAmmoIndex(entityName);
         var ammo = pawn.GetWeaponService()?.GetAmmo();
 
-        if(index == null || ammo == null || index.Value >= ammo.Size)
+        if (index == null || ammo == null || index.Value >= ammo.Size)
             return 0;
 
         return ammo[index.Value];
@@ -397,7 +403,7 @@ public class Weapons : IWeapons
         var index = GetGrenadeAmmoIndex(entityName);
         var ammo = pawn.GetWeaponService()?.GetAmmo();
 
-        if(index == null || ammo == null || index.Value >= ammo.Size)
+        if (index == null || ammo == null || index.Value >= ammo.Size)
             return;
 
         ammo[index.Value] = (ushort)Math.Clamp(count, 0, GetGrenadeStackLimit());
@@ -407,7 +413,7 @@ public class Weapons : IWeapons
     {
         entityName = GetGrenadeEntityName(entityName) ?? entityName;
 
-        if(_grenadeAmmoIndexes.TryGetValue(entityName, out var cached))
+        if (_grenadeAmmoIndexes.TryGetValue(entityName, out var cached))
             return cached;
 
         return entityName switch
@@ -448,11 +454,13 @@ public class Weapons : IWeapons
 
     private void PrintPurchaseMessage(IGameClient client, Player player, WeaponData weapon)
     {
-        PrintToChat(client, $"You have purchased weapon \x05{weapon.WeaponName}\x01. {(weapon.MaxPurchase > 0 ? $"Purchases available left: ({weapon.MaxPurchase - player.PurchaseHistory[weapon.WeaponName]}/{weapon.MaxPurchase})" : "")}");
+        PrintToChat(client,
+            $"You have purchased weapon \x05{weapon.WeaponName}\x01. {(weapon.MaxPurchase > 0 ? $"Purchases available left: ({weapon.MaxPurchase - player.PurchaseHistory[weapon.WeaponName]}/{weapon.MaxPurchase})" : "")}");
     }
 
     private void PrintToChat(IGameClient client, string text)
     {
-        _modsharp.PrintChannelFilter(HudPrintChannel.Chat, $"{ZombieModSharp.Prefix} {text}", new RecipientFilter(client));
+        _modsharp.PrintChannelFilter(HudPrintChannel.Chat, $"{ZombieModSharp.Prefix} {text}",
+            new RecipientFilter(client));
     }
 }

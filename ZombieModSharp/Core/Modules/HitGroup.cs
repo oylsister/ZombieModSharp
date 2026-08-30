@@ -26,10 +26,10 @@ public class HitGroup : IHitGroup
         try
         {
             var jsonContent = File.ReadAllText(configPath);
-            
+
             // Simple comment removal (basic implementation)
             var lines = jsonContent.Split('\n');
-            var cleanedLines = lines.Select(line => 
+            var cleanedLines = lines.Select(line =>
             {
                 var commentIndex = line.IndexOf("//", StringComparison.Ordinal);
                 return commentIndex >= 0 ? line.Substring(0, commentIndex) : line;
@@ -63,7 +63,7 @@ public class HitGroup : IHitGroup
         }
         */
     }
-    
+
     public float GetHitgroupKnockback(int hitgroup)
     {
         if (hitgroup >= higroupDatas.Length || hitgroup < 0)

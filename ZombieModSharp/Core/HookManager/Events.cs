@@ -16,6 +16,7 @@ namespace ZombieModSharp.Core.HookManager;
 public class Events : IEvents
 {
     private readonly ISharedSystem _sharedSystem;
+
     // private readonly IEventManager _eventManager;
     private readonly IGameEventManager _gameEventManager;
     private readonly ILogger<Events> _logger;
@@ -37,7 +38,10 @@ public class Events : IEvents
     public bool RoundEnded { get; private set; } = false;
     private Guid _roundTimer = Guid.Empty;
 
-    public Events(ISharedSystem sharedSystem, IGameEventManager gameEventManager, ILogger<Events> logger, IPlayerManager playerManager, IInfect infect, IZTele ztele, IKnockback knockback, ICvarServices cvarServices, ISoundServices soundServices, IRespawnServices respawnServices, IGlowServices glowMethod, ILeaderServices leaderServices)
+    public Events(ISharedSystem sharedSystem, IGameEventManager gameEventManager, ILogger<Events> logger,
+        IPlayerManager playerManager, IInfect infect, IZTele ztele, IKnockback knockback, ICvarServices cvarServices,
+        ISoundServices soundServices, IRespawnServices respawnServices, IGlowServices glowMethod,
+        ILeaderServices leaderServices)
     {
         _sharedSystem = sharedSystem;
         _gameEventManager = gameEventManager;
@@ -96,8 +100,8 @@ public class Events : IEvents
 
         if (zmClient.IsHuman() && zmAttacker.IsInfected())
         {
-            if(_infect.IsTestMode())
-            {      
+            if (_infect.IsTestMode())
+            {
                 return;
             }
 
@@ -115,13 +119,13 @@ public class Events : IEvents
 
             zmAttacker.TotalDamage += damage;
 
-            if(pawn != null)
+            if (pawn != null)
             {
-                if(Infect.CashMultiply > 0)
+                if (Infect.CashMultiply > 0)
                 {
                     var accountService = attackerClient.GetPlayerController()?.GetInGameMoneyService();
 
-                    if(accountService != null)
+                    if (accountService != null)
                     {
                         accountService.Account += (int)Math.Ceiling(damage * Infect.CashMultiply);
                     }
@@ -140,7 +144,7 @@ public class Events : IEvents
         var client = e.GetPlayerController("userid")?.GetGameClient();
         var controller = e.GetPlayerController("userid");
 
-        if(client == null)
+        if (client == null)
             return;
 
         if (controller != null && controller.IsValid())
@@ -152,11 +156,11 @@ public class Events : IEvents
             }
         }
 
-        if(_playerManager.GetOrCreatePlayer(client).IsInfected())
+        if (_playerManager.GetOrCreatePlayer(client).IsInfected())
         {
             var pawn = e.GetPlayerController("userid")?.GetPlayerPawn();
 
-            if(pawn != null)
+            if (pawn != null)
                 _soundServices.EmitZombieSound(pawn, "zr.amb.zombie_die");
         }
 
@@ -176,10 +180,10 @@ public class Events : IEvents
         // _modSharp.PrintChannelAll(HudPrintChannel.Chat, "Infect round freeze is called");
         _infect.OnRoundFreezeEnd();
         var timer = _convarManager.FindConVar("mp_roundtime")?.GetFloat() ?? 15.0f;
-        _roundTimer = _modSharp.PushTimer(() =>
-        {
-            _modSharp.GetGameRules().TerminateRound(8.0f, RoundEndReason.RoundDraw, true);
-        }, timer * 60.0f, GameTimerFlags.StopOnRoundEnd|GameTimerFlags.StopOnMapEnd);
+        _roundTimer =
+            _modSharp.PushTimer(
+                () => { _modSharp.GetGameRules().TerminateRound(8.0f, RoundEndReason.RoundDraw, true); }, timer * 60.0f,
+                GameTimerFlags.StopOnRoundEnd | GameTimerFlags.StopOnMapEnd);
     }
 
     private void OnRoundStart(IGameEvent e)
@@ -197,16 +201,16 @@ public class Events : IEvents
         //_modSharp.PrintChannelAll(HudPrintChannel.Chat, $"The round just started");
         _infect.OnRoundStart();
 
-        if(_roundTimer != Guid.Empty)
+        if (_roundTimer != Guid.Empty)
         {
             _modSharp.StopTimer(_roundTimer);
             _roundTimer = Guid.Empty;
         }
 
-        if(_cvarServices.CvarList["Cvar_RespawnEnabled"]?.GetBool() ?? false)
+        if (_cvarServices.CvarList["Cvar_RespawnEnabled"]?.GetBool() ?? false)
             RespawnServices.SetRespawnEnable(true);
 
-        if(_cvarServices.CvarList["Cvar_RespawnTogglerEnable"]?.GetBool() ?? false)
+        if (_cvarServices.CvarList["Cvar_RespawnTogglerEnable"]?.GetBool() ?? false)
             _respawnServices.SetupRespawnToggler();
     }
 
@@ -220,7 +224,7 @@ public class Events : IEvents
         RespawnServices.SetRespawnEnable(false);
         _infect.OnRoundEnd();
 
-        if(_roundTimer != Guid.Empty)
+        if (_roundTimer != Guid.Empty)
         {
             _modSharp.StopTimer(_roundTimer);
             _roundTimer = Guid.Empty;
@@ -247,7 +251,7 @@ public class Events : IEvents
 
         var playerPawn = pawn?.GetPlayerPawn();
 
-        if(playerPawn == null)
+        if (playerPawn == null)
             return;
 
         playerPawn.AllowTakesDamage = false;
@@ -262,26 +266,26 @@ public class Events : IEvents
         // we clear all player history here.
         player.PurchaseHistory.Clear();
 
-            // infect or
+        // infect or
         _modSharp.PushTimer(() =>
         {
             var teamRespawn = _cvarServices.CvarList["Cvar_RespawnTeam"]?.GetInt32() ?? 0;
 
             if (_infect.IsInfectStarted())
             {
-                if(!_infect.IsTestMode())
+                if (!_infect.IsTestMode())
                 {
-                    if(teamRespawn == 0)
+                    if (teamRespawn == 0)
                         _infect.InfectPlayer(client);
 
-                    else if(teamRespawn == 1)
+                    else if (teamRespawn == 1)
                         _infect.HumanizeClient(client);
 
                     else
                     {
                         var zombie = player.IsInfected();
 
-                        if(zombie)
+                        if (zombie)
                             _infect.InfectPlayer(client);
 
                         else
@@ -298,7 +302,7 @@ public class Events : IEvents
             {
                 _infect.HumanizeClient(client);
 
-                if(player.AllowExtraGrenade)
+                if (player.AllowExtraGrenade)
                 {
                     pawn?.GetPlayerPawn()?.GiveNamedItem(EconItemId.Hegrenade);
                 }
@@ -310,7 +314,7 @@ public class Events : IEvents
 
             // _modSharp.PrintToChatAll($"Noblock = {noblock}");
 
-            if(noblock)
+            if (noblock)
             {
                 pawn?.GetPlayerPawn()?.SetCollisionGroup(CollisionGroupType.Debris);
             }
@@ -325,12 +329,12 @@ public class Events : IEvents
         var weapon = pawn?.GetWeaponService()?.ActiveWeapon;
         // _modSharp.PrintToChatAll("Fired");
 
-        if(weapon != null && (weapon.Slot == GearSlot.Rifle || weapon.Slot == GearSlot.Pistol))
+        if (weapon != null && (weapon.Slot == GearSlot.Rifle || weapon.Slot == GearSlot.Pistol))
         {
             //_modSharp.PrintToChatAll("Change");
             weapon.ReserveAmmo += 1;
 
-            if(client != null && _playerManager.GetOrCreatePlayer(client).InfiniteAmmo)
+            if (client != null && _playerManager.GetOrCreatePlayer(client).InfiniteAmmo)
             {
                 weapon.Clip = weapon.MaxClip;
             }

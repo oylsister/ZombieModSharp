@@ -19,15 +19,16 @@ namespace ZombieModSharp;
 
 public sealed class ZombieModSharp : IModSharpModule
 {
-    public string DisplayName   => "Zombie ModSharp";
+    public string DisplayName => "Zombie ModSharp";
     public string DisplayAuthor => "Oylsister";
 
     private IModSharpModuleInterface<IAdminManager>? _adminManager;
     private IModSharpModuleInterface<IMenuManager>? _menuManager;
 
     private readonly ILogger<ZombieModSharp> _logger;
+
     // private readonly InterfaceBridge  _bridge;
-    private readonly ServiceProvider  _serviceProvider;
+    private readonly ServiceProvider _serviceProvider;
     private readonly ISharedSystem _sharedSystem;
     private readonly IEvents _eventListener;
     private readonly IListeners _listeners;
@@ -37,7 +38,7 @@ public sealed class ZombieModSharp : IModSharpModule
     private readonly ICvarServices _cvarServices;
     private readonly IInfect _infect;
     private readonly ILeaderServices _leaderServices;
-    private readonly ISharpModuleManager  _modules;
+    private readonly ISharpModuleManager _modules;
     private readonly IPlayerClasses _playerClasses;
     private readonly IPlayerManager _playerManager;
     private IModSharpModuleInterface<IClientPreference>? _clientPreference;
@@ -51,11 +52,11 @@ public sealed class ZombieModSharp : IModSharpModule
     private const string AdminManagerAssemblyName = "Sharp.Modules.AdminManager";
 
     public ZombieModSharp(ISharedSystem sharedSystem,
-                      string dllPath,
-                      string sharpPath,
-                      Version? version,
-                      IConfiguration configuration,
-                      bool hotReload)
+        string dllPath,
+        string sharpPath,
+        Version? version,
+        IConfiguration configuration,
+        bool hotReload)
     {
         ArgumentNullException.ThrowIfNull(dllPath);
         ArgumentNullException.ThrowIfNull(sharpPath);
@@ -70,7 +71,7 @@ public sealed class ZombieModSharp : IModSharpModule
 
         services.AddSingleton(sharedSystem.GetLoggerFactory());
         services.TryAdd(ServiceDescriptor.Singleton(typeof(ILogger<>), typeof(Logger<>)));
-        
+
         // Register external dependencies
         services.AddSingleton(_sharedSystem);
         services.AddSingleton(_sharedSystem.GetEntityManager());
@@ -145,7 +146,8 @@ public sealed class ZombieModSharp : IModSharpModule
     public void OnAllModulesLoaded()
     {
         TryResolveAdminManager();
-        _menuManager = _sharedSystem.GetSharpModuleManager().GetOptionalSharpModuleInterface<IMenuManager>(IMenuManager.Identity);
+        _menuManager = _sharedSystem.GetSharpModuleManager()
+            .GetOptionalSharpModuleInterface<IMenuManager>(IMenuManager.Identity);
         _playerClasses.GetMenuManager(_menuManager);
         _clientPreference = _modules.GetRequiredSharpModuleInterface<IClientPreference>(IClientPreference.Identity);
         _clientPreferenceLoadSubscription = _clientPreference.Instance!.ListenOnLoad(OnClientPreferencesLoaded);
@@ -207,7 +209,6 @@ public sealed class ZombieModSharp : IModSharpModule
 
     public void OnLibraryDisconnect(string name)
     {
-        
     }
 
     private void TryResolveAdminManager(bool logFailure = false)
@@ -218,7 +219,7 @@ public sealed class ZombieModSharp : IModSharpModule
         }
 
         _adminManager = _sharedSystem.GetSharpModuleManager()
-                                     .GetOptionalSharpModuleInterface<IAdminManager>(IAdminManager.Identity);
+            .GetOptionalSharpModuleInterface<IAdminManager>(IAdminManager.Identity);
 
         if (_adminManager?.Instance is null)
         {

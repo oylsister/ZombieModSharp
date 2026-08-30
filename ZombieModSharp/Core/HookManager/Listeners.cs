@@ -14,11 +14,11 @@ namespace ZombieModSharp.Core.HookManager;
 
 public class Listeners : IListeners, IClientListener, IGameListener, IEntityListener
 {
-    int IClientListener.ListenerVersion  => IClientListener.ApiVersion;
+    int IClientListener.ListenerVersion => IClientListener.ApiVersion;
     int IClientListener.ListenerPriority => 0;
-    int IEntityListener.ListenerVersion  => IEntityListener.ApiVersion;
+    int IEntityListener.ListenerVersion => IEntityListener.ApiVersion;
     int IEntityListener.ListenerPriority => 0;
-    int IGameListener.ListenerVersion  => IGameListener.ApiVersion;
+    int IGameListener.ListenerVersion => IGameListener.ApiVersion;
     int IGameListener.ListenerPriority => 0;
 
     private readonly IPlayerManager _playerManager;
@@ -36,7 +36,10 @@ public class Listeners : IListeners, IClientListener, IGameListener, IEntityList
     private readonly IGlowServices _glowServices;
     private readonly ILeaderServices _leaderServices;
 
-    public Listeners(IPlayerManager playerManager, ISharedSystem sharedSystem, ICvarServices cvarServices, IPlayerClasses playerClasses, IPrecacheManager precacheManager, IRespawnServices respawnServices, IWeapons weapons, IGrenadeEffect grenadeEffect, IMarkerServices markerServices, ILeaderServices leaderServices, IGlowServices glowServices)
+    public Listeners(IPlayerManager playerManager, ISharedSystem sharedSystem, ICvarServices cvarServices,
+        IPlayerClasses playerClasses, IPrecacheManager precacheManager, IRespawnServices respawnServices,
+        IWeapons weapons, IGrenadeEffect grenadeEffect, IMarkerServices markerServices, ILeaderServices leaderServices,
+        IGlowServices glowServices)
     {
         _playerManager = playerManager;
         _sharedSystem = sharedSystem;
@@ -52,7 +55,6 @@ public class Listeners : IListeners, IClientListener, IGameListener, IEntityList
         _markerServices = markerServices;
         _leaderServices = leaderServices;
         _glowServices = glowServices;
-
     }
 
     public void Init()
@@ -61,7 +63,7 @@ public class Listeners : IListeners, IClientListener, IGameListener, IEntityList
 
         clientManager.InstallClientListener(this);
         clientManager.InstallCommandListener("jointeam", OnJoinTeamCommand);
-        
+
         clientManager.InstallCommandListener("player_ping", OnPlayerPing);
 
         _entityManager.InstallEntityListener(this);
@@ -99,7 +101,7 @@ public class Listeners : IListeners, IClientListener, IGameListener, IEntityList
 
         _playerManager.RemovePlayer(client);
     }
-    
+
     public void OnResourcePrecache()
     {
         // _logger.LogInformation("Precache GoldShip Here");
@@ -115,30 +117,31 @@ public class Listeners : IListeners, IClientListener, IGameListener, IEntityList
     {
         // we execute config first.
         _modsharp.ServerCommand($"exec zombiemodsharp/zombiemodsharp.cfg");
-        
+
         // get map name
         var mapname = _modsharp.GetMapName();
 
-        if(!string.IsNullOrEmpty(mapname))
+        if (!string.IsNullOrEmpty(mapname))
         {
             _modsharp.ServerCommand($"exec zombiemodsharp/{mapname}.cfg");
         }
     }
-    
+
     public void OnRoundRestarted()
     {
         _markerServices.CleanupAll();
         _glowServices.CleanupAll();
         _leaderServices.ReloadLeaderList(_sharedSystem);
 
-        _modsharp.PushTimer(() => {
+        _modsharp.PushTimer(() =>
+        {
             var leaders = _leaderServices.GetAllLeaders();
 
             foreach (var controller in leaders)
             {
                 if (controller == null || !controller.IsValid()) continue;
 
-                
+
                 var pawn = controller.GetPlayerPawn();
                 if (pawn == null || !pawn.IsValid()) continue;
 
@@ -165,9 +168,9 @@ public class Listeners : IListeners, IClientListener, IGameListener, IEntityList
 
         var allowJoinLate = _cvarServices.CvarList["Cvar_RespawnLateJoin"]?.GetBool() ?? false;
 
-        if(team == CStrikeTeam.TE || team == CStrikeTeam.CT)
+        if (team == CStrikeTeam.TE || team == CStrikeTeam.CT)
         {
-            if(allowJoinLate)
+            if (allowJoinLate)
                 _respawnServices.InitRespawn(client.GetPlayerController());
         }
 
@@ -179,7 +182,7 @@ public class Listeners : IListeners, IClientListener, IGameListener, IEntityList
         if (!client.IsValid) return ECommandAction.Handled;
         if (!_leaderServices.IsClientLeader(client.GetPlayerController())) return ECommandAction.Handled;
 
-        
+
         var controller = client.GetPlayerController();
         var pawn = controller?.GetPawn();
         // get eye position and angles for place marker
@@ -202,24 +205,24 @@ public class Listeners : IListeners, IClientListener, IGameListener, IEntityList
             var placePos = hitPos + new Vector(0, 0, 1.0f);
 
             _markerServices.CreateMarker(client, placePos);
-            
         }
 
         return ECommandAction.Stopped;
     }
 
-    public EHookAction OnEntityAcceptInput(IBaseEntity entity, string input, in EntityVariant value, IBaseEntity? activator, IBaseEntity? caller)
+    public EHookAction OnEntityAcceptInput(IBaseEntity entity, string input, in EntityVariant value,
+        IBaseEntity? activator, IBaseEntity? caller)
     {
         //_modsharp.PrintToChatAll($"Founded {entity.Name} {input}");
 
-        if(!_cvarServices.CvarList["Cvar_RespawnTogglerEnable"]?.GetBool() ?? false)
+        if (!_cvarServices.CvarList["Cvar_RespawnTogglerEnable"]?.GetBool() ?? false)
             return EHookAction.Ignored;
 
         var respawner = _respawnServices.GetRespawnToggler();
-        if(respawner == null || !respawner.IsValid())
+        if (respawner == null || !respawner.IsValid())
             return EHookAction.Ignored;
 
-        if(entity != respawner)
+        if (entity != respawner)
             return EHookAction.Ignored;
 
         if (input.Equals("Trigger", StringComparison.OrdinalIgnoreCase))
@@ -245,16 +248,16 @@ public class Listeners : IListeners, IClientListener, IGameListener, IEntityList
 
     public void OnEntitySpawned(IBaseEntity entity)
     {
-        if(entity.Classname.Contains("weapon_"))
+        if (entity.Classname.Contains("weapon_"))
         {
-            if(entity.AsBaseWeapon() is not { } weapon)
+            if (entity.AsBaseWeapon() is not { } weapon)
             {
                 return;
             }
 
             var name = weapon?.GetItemDefinitionName();
 
-            if(name == null || weapon == null)
+            if (name == null || weapon == null)
                 return;
 
             var ammo = _weapons.GetWeaponAmmo(name);
@@ -262,15 +265,15 @@ public class Listeners : IListeners, IClientListener, IGameListener, IEntityList
 
             var vdata = weapon.GetWeaponData();
 
-            if(ammo != null)
+            if (ammo != null)
             {
-                if(ammo.ReserveAmmo > 0)
+                if (ammo.ReserveAmmo > 0)
                 {
                     vdata.PrimaryReserveAmmoMax = ammo.ReserveAmmo;
                     weapon.ReserveAmmo = ammo.ReserveAmmo;
                 }
-                
-                if(ammo.Clip > 0)
+
+                if (ammo.Clip > 0)
                 {
                     vdata.MaxClip = ammo.Clip;
                     weapon.Clip = ammo.Clip;
@@ -278,25 +281,21 @@ public class Listeners : IListeners, IClientListener, IGameListener, IEntityList
             }
         }
 
-        if(entity.Classname.Contains("_projectile"))
+        if (entity.Classname.Contains("_projectile"))
         {
             entity.SetCollisionGroup(CollisionGroupType.Debris);
         }
 
-        if(entity.Classname.Contains("smokegrenade_projectile") || entity.Classname.Contains("decoy_projectile"))
+        if (entity.Classname.Contains("smokegrenade_projectile") || entity.Classname.Contains("decoy_projectile"))
         {
-            _modsharp.PushTimer(() =>
-            {
-                _grenadeEffect.ApplyFreeze(entity, 600, 3f);
-            }, 1.3f, GameTimerFlags.StopOnMapEnd);
+            _modsharp.PushTimer(() => { _grenadeEffect.ApplyFreeze(entity, 600, 3f); }, 1.3f,
+                GameTimerFlags.StopOnMapEnd);
         }
 
-        if(entity.Classname.Contains("flashbang_projectile"))
+        if (entity.Classname.Contains("flashbang_projectile"))
         {
-            _modsharp.PushTimer(() =>
-            {
-                _grenadeEffect.ApplyLightGrenade(entity, 15f);
-            }, 1.3f, GameTimerFlags.StopOnMapEnd);
+            _modsharp.PushTimer(() => { _grenadeEffect.ApplyLightGrenade(entity, 15f); }, 1.3f,
+                GameTimerFlags.StopOnMapEnd);
         }
     }
 }

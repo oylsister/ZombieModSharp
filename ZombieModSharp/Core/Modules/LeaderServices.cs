@@ -25,7 +25,8 @@ public class LeaderServices : ILeaderServices
     private readonly object _voteLock = new();
     public event Action<IPlayerController, bool>? OnLeaderStatusChanged;
 
-    public LeaderServices(ISharedSystem sharedSystem, ILogger<LeaderServices> logger, IGlowServices glowMethod, IGameEventManager gameEventManager, IPlayerManager playerManager)
+    public LeaderServices(ISharedSystem sharedSystem, ILogger<LeaderServices> logger, IGlowServices glowMethod,
+        IGameEventManager gameEventManager, IPlayerManager playerManager)
     {
         _sharedSystem = sharedSystem;
         _logger = logger;
@@ -39,40 +40,48 @@ public class LeaderServices : ILeaderServices
     {
         if (target == null || !target.IsValid || !target.IsConnected)
         {
-            _modsharp.PrintChannelFilter(HudPrintChannel.Chat, $"{ZombieModSharp.Prefix} Invalid voter or target for leader vote.", new RecipientFilter(voter));
+            _modsharp.PrintChannelFilter(HudPrintChannel.Chat,
+                $"{ZombieModSharp.Prefix} Invalid voter or target for leader vote.", new RecipientFilter(voter));
             return;
         }
 
         if (_leaders.Count >= 2)
         {
-            _modsharp.PrintChannelFilter(HudPrintChannel.Chat, $"{ZombieModSharp.Prefix} Leader slots are full (max 2). Cannot assign {target.Name}.", new RecipientFilter(voter));
+            _modsharp.PrintChannelFilter(HudPrintChannel.Chat,
+                $"{ZombieModSharp.Prefix} Leader slots are full (max 2). Cannot assign {target.Name}.",
+                new RecipientFilter(voter));
             return;
         }
 
         var player = _playerManager.GetOrCreatePlayer(target);
         var voterPlayer = _playerManager.GetOrCreatePlayer(voter);
 
-        if(player.IsInfected())
+        if (player.IsInfected())
         {
-            _modsharp.PrintChannelFilter(HudPrintChannel.Chat, $"{ZombieModSharp.Prefix} You cannot vote for a zombie.", new RecipientFilter(voter));
+            _modsharp.PrintChannelFilter(HudPrintChannel.Chat, $"{ZombieModSharp.Prefix} You cannot vote for a zombie.",
+                new RecipientFilter(voter));
             return;
         }
 
-        if(voterPlayer.IsInfected())
+        if (voterPlayer.IsInfected())
         {
-            _modsharp.PrintChannelFilter(HudPrintChannel.Chat, $"{ZombieModSharp.Prefix} You cannot vote as a zombie.", new RecipientFilter(voter));
+            _modsharp.PrintChannelFilter(HudPrintChannel.Chat, $"{ZombieModSharp.Prefix} You cannot vote as a zombie.",
+                new RecipientFilter(voter));
             return;
         }
 
         if (IsClientLeader(target.GetPlayerController()))
         {
-            _modsharp.PrintChannelFilter(HudPrintChannel.Chat, $"{ZombieModSharp.Prefix} Target player is already a leader.", new RecipientFilter(voter));
+            _modsharp.PrintChannelFilter(HudPrintChannel.Chat,
+                $"{ZombieModSharp.Prefix} Target player is already a leader.", new RecipientFilter(voter));
             return;
         }
 
-        if(voterPlayer.LeaderVotedTarget == target)
+        if (voterPlayer.LeaderVotedTarget == target)
         {
-            _modsharp.PrintChannelFilter(HudPrintChannel.Chat, $"{ZombieModSharp.Prefix} You have already voted {target.Name} for a leader.", new RecipientFilter(voter));
+            _modsharp.PrintChannelFilter(HudPrintChannel.Chat,
+                $"{ZombieModSharp.Prefix} You have already voted {target.Name} for a leader.",
+                new RecipientFilter(voter));
             return;
         }
 
@@ -83,18 +92,20 @@ public class LeaderServices : ILeaderServices
         var allPlayer = _playerManager.GetAllPlayers();
         int requiredVotes = allPlayer.Count / 8;
 
-        if(requiredVotes == 0)
+        if (requiredVotes == 0)
             requiredVotes = 1;
 
-        _modsharp.PrintToChatAll($"{ZombieModSharp.Prefix} {voter.Name} voted {target.Name} for leader. Current votes: {player.LeaderVoteCount} / {requiredVotes}");
+        _modsharp.PrintToChatAll(
+            $"{ZombieModSharp.Prefix} {voter.Name} voted {target.Name} for leader. Current votes: {player.LeaderVoteCount} / {requiredVotes}");
 
         if (player.LeaderVoteCount >= requiredVotes)
         {
             var targetController = target.GetPlayerController();
 
-            if(targetController == null || !targetController.IsValid())
+            if (targetController == null || !targetController.IsValid())
             {
-                _modsharp.PrintChannelFilter(HudPrintChannel.Chat, $"{ZombieModSharp.Prefix} Target player controller is invalid.", new RecipientFilter(voter));
+                _modsharp.PrintChannelFilter(HudPrintChannel.Chat,
+                    $"{ZombieModSharp.Prefix} Target player controller is invalid.", new RecipientFilter(voter));
                 return;
             }
 
@@ -102,7 +113,8 @@ public class LeaderServices : ILeaderServices
             {
                 _modsharp.PrintToChatAll($"{ZombieModSharp.Prefix} {target.Name} has been assigned as a leader!");
                 player.LeaderVoteCount = 0; // reset vote count after becoming leader
-                allPlayer.Where(p => p.Value.LeaderVotedTarget == target).ToList().ForEach(p => p.Value.LeaderVotedTarget = null); // reset votes for this target
+                allPlayer.Where(p => p.Value.LeaderVotedTarget == target).ToList()
+                    .ForEach(p => p.Value.LeaderVotedTarget = null); // reset votes for this target
             }
         }
     }
@@ -114,7 +126,8 @@ public class LeaderServices : ILeaderServices
 
         if (_leaders.Count >= 2)
         {
-            _modsharp.PrintToChatAll($"{ZombieModSharp.Prefix} Leader slots are full (max 2). Cannot assign {controller.PlayerName}.");
+            _modsharp.PrintToChatAll(
+                $"{ZombieModSharp.Prefix} Leader slots are full (max 2). Cannot assign {controller.PlayerName}.");
             return false;
         }
 
@@ -124,10 +137,11 @@ public class LeaderServices : ILeaderServices
             OnLeaderStatusChanged?.Invoke(controller, true);
             return true;
         }
+
         return false;
     }
 
-    
+
     public bool RemoveLeader(IPlayerController controller)
     {
         if (controller == null || !controller.IsValid())
@@ -140,7 +154,7 @@ public class LeaderServices : ILeaderServices
         return true;
     }
 
-    
+
     public void ClearAllLeaders()
     {
         foreach (var controller in _leaders.ToList())
@@ -149,7 +163,7 @@ public class LeaderServices : ILeaderServices
         _leaders.Clear();
     }
 
-    
+
     public bool IsClientLeader(IPlayerController? controller)
     {
         if (controller == null || !controller.IsValid())
@@ -158,13 +172,13 @@ public class LeaderServices : ILeaderServices
         return _leaders.Contains(controller);
     }
 
-    
+
     public IEnumerable<IPlayerController> GetAllLeaders()
     {
         return _leaders.ToList();
     }
 
-    
+
     public void ReloadLeaderList(ISharedSystem sharedSystem)
     {
         var refreshed = new List<IPlayerController>();
@@ -222,5 +236,4 @@ public class LeaderServices : ILeaderServices
             // 忽略錯誤，避免伺服器崩潰
         }
     }
-    
 }
