@@ -272,14 +272,4 @@ public sealed class ZombieModSharp : IModSharpModule
                 .GetOptionalSharpModuleInterface<ITargetingManager>(ITargetingManager.Identity));
         }
     }
-
-    private void RegisterTargetResolver()
-    {
-        if (_targetingManager is null || _registered) return;
-
-        // stop if the target string is already registered
-        if (!_targetingManager.RegisterResolver("ZombieModSharp", new AimTargetResolver(_sharedSystem))) return;
-
-        _registered = true;
-    }
 }
