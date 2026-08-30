@@ -7,13 +7,16 @@ using Sharp.Extensions.GameEventManager;
 using Sharp.Modules.AdminManager.Shared;
 using Sharp.Modules.ClientPreferences.Shared;
 using Sharp.Modules.MenuManager.Shared;
+using Sharp.Modules.TargetingManager.Shared;
 using Sharp.Shared;
 using Sharp.Shared.Abstractions;
 using Sharp.Shared.Managers;
 using Sharp.Shared.Objects;
+using System.Reflection;
 using ZombieModSharp.Abstractions;
 using ZombieModSharp.Core.Services;
 using ZombieModSharp.Shared;
+using static ZombieModSharp.Core.Modules.Command;
 
 namespace ZombieModSharp;
 
@@ -24,10 +27,11 @@ public sealed class ZombieModSharp : IModSharpModule
 
     private IModSharpModuleInterface<IAdminManager>? _adminManager;
     private IModSharpModuleInterface<IMenuManager>? _menuManager;
-
-    private readonly ILogger<ZombieModSharp> _logger;
+    private IModSharpModuleInterface<IClientPreference>? _clientPreference;
 
     // private readonly InterfaceBridge  _bridge;
+    private readonly ILogger<ZombieModSharp> _logger;
+
     private readonly ServiceProvider _serviceProvider;
     private readonly ISharedSystem _sharedSystem;
     private readonly IEvents _eventListener;
@@ -41,8 +45,11 @@ public sealed class ZombieModSharp : IModSharpModule
     private readonly ISharpModuleManager _modules;
     private readonly IPlayerClasses _playerClasses;
     private readonly IPlayerManager _playerManager;
-    private IModSharpModuleInterface<IClientPreference>? _clientPreference;
+
+    private bool _registered = false;
+    
     private IDisposable? _clientPreferenceLoadSubscription;
+    private ITargetingManager? _targetingManager;
 
     public static string Prefix { get; } = " \x04[Z:MS]\x01";
     internal const string HumanClassCookieKey = "ZombieModSharp.HumanClass";
@@ -50,6 +57,7 @@ public sealed class ZombieModSharp : IModSharpModule
     internal const string SoundEnabledCookieKey = "ZombieModSharp.SoundEnabled";
     internal const string SoundVolumeCookieKey = "ZombieModSharp.SoundVolume";
     private const string AdminManagerAssemblyName = "Sharp.Modules.AdminManager";
+    private const string TargetingManagerAssemblyName = "Sharp.Modules.TargetingManager";
 
     public ZombieModSharp(ISharedSystem sharedSystem,
         string dllPath,
@@ -100,6 +108,8 @@ public sealed class ZombieModSharp : IModSharpModule
         _leaderServices = _serviceProvider.GetRequiredService<ILeaderServices>();
         _playerClasses = _serviceProvider.GetRequiredService<IPlayerClasses>();
         _playerManager = _serviceProvider.GetRequiredService<IPlayerManager>();
+
+
     }
 
     public bool Init()
@@ -138,6 +148,7 @@ public sealed class ZombieModSharp : IModSharpModule
     {
         // _logger.LogInformation("Why don't you stay and play for a while?");
         // _eventListener.RegisterEvents();
+        TryResolveTargetingManager();
         _command.PostInit();
         _modules.RegisterSharpModuleInterface<IInfectShared>(this, IInfectShared.Identity, _infect);
         _modules.RegisterSharpModuleInterface<ILeaderShared>(this, ILeaderShared.Identity, _leaderServices);
@@ -146,6 +157,7 @@ public sealed class ZombieModSharp : IModSharpModule
     public void OnAllModulesLoaded()
     {
         TryResolveAdminManager();
+        TryResolveTargetingManager();
         _menuManager = _sharedSystem.GetSharpModuleManager()
             .GetOptionalSharpModuleInterface<IMenuManager>(IMenuManager.Identity);
         _playerClasses.GetMenuManager(_menuManager);
@@ -204,11 +216,17 @@ public sealed class ZombieModSharp : IModSharpModule
         if (name.Equals(AdminManagerAssemblyName, StringComparison.OrdinalIgnoreCase))
         {
             TryResolveAdminManager(true);
+            TryResolveTargetingManager();
         }
     }
 
     public void OnLibraryDisconnect(string name)
     {
+        if (name.Equals(TargetingManagerAssemblyName, StringComparison.OrdinalIgnoreCase))
+        {
+            _targetingManager = null;
+            _registered = false;
+        }
     }
 
     private void TryResolveAdminManager(bool logFailure = false)
@@ -233,5 +251,48 @@ public sealed class ZombieModSharp : IModSharpModule
 
         _command.GetAdminManager(_adminManager);
         _command.RegisterAdminCommand();
+    }
+    private T? GetExternalModule<T>(string identity) where T : class
+        => _sharedSystem.GetSharpModuleManager()
+            .GetOptionalSharpModuleInterface<T>(identity)
+            ?.Instance;
+    private void TryResolveTargetingManager(bool logFailure = false)
+    {
+        if (_targetingManager is not null)
+        {
+            return;
+        }
+
+        _targetingManager = GetExternalModule<ITargetingManager>(ITargetingManager.Identity);
+
+        if (_targetingManager is null)
+        {
+            if (logFailure)
+            {
+                _logger.LogWarning("Failed to get TargetingManager. Do you have '{AssemblyName}' installed? Target selectors will be limited.",
+                    TargetingManagerAssemblyName);
+            }
+        }
+        else
+        {
+            // 把 TargetingManager 傳給 Command
+            _command.GetTargetManager(_sharedSystem.GetSharpModuleManager()
+                .GetOptionalSharpModuleInterface<ITargetingManager>(ITargetingManager.Identity));
+        }
+    }
+    private void RegisterTargetResolver()
+    {
+        if (_targetingManager is null || _registered)
+        {
+            return;
+        }
+
+        // stop if the target string is already registered
+        if (!_targetingManager.RegisterResolver("ZombieModSharp", new AimTargetResolver(_sharedSystem)))
+        {
+            return;
+        }
+
+        _registered = true;
     }
 }
