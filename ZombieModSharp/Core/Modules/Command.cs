@@ -51,56 +51,13 @@ public class Command : ICommand
         _playerClasses = playerClasses;
     }
 
-    internal class AimTargetResolver : ITargetResolver
-    {
-        public const string TargetString = "@aim";
-        private readonly ISharedSystem _shared;
-
-        public AimTargetResolver(ISharedSystem shared)
-        {
-            _shared = shared;
-        }
-
-        public string GetTarget()
-        {
-            return TargetString;
-        }
-
-        public IEnumerable<IGameClient> Resolve(IGameClient? activator)
-        {
-            if (activator?.GetPlayerController()?.GetPlayerPawn() is not { IsAlive: true } pawn)
-                return [];
-
-            var start = pawn.GetEyePosition();
-            var fwd = pawn.GetEyeAngles().AnglesToVectorForward();
-            var end = start + fwd * 8192.0f;
-
-            var attr = RnQueryShapeAttr.Bullets();
-            attr.SetEntityToIgnore(pawn, 0);
-
-            var trace = _shared.GetPhysicsQueryManager().TraceLine(start, end, attr);
-
-            if (!trace.DidHit()) return [];
-
-            if (_shared.GetEntityManager().MakeEntityFromPointer<IPlayerPawn>(trace.Entity) is not
-                { IsPlayerPawn: true } tracePawn)
-                return [];
-
-            if (tracePawn.GetControllerAuto() is not { IsValidEntity: true } traceController)
-                return [];
-
-            return traceController.GetGameClient() is { } traceClient ? [traceClient] : [];
-        }
-    }
+    
 
     public void GetTargetManager(IModSharpModuleInterface<ITargetingManager>? targetingManager)
     {
         if (targetingManager?.Instance is null) return;
 
         _targetingManager = targetingManager.Instance;
-
-        // 註冊自訂 Resolver，例如 @aim
-        _targetingManager.RegisterResolver("ZombieModSharp", new AimTargetResolver(_sharedSystem));
     }
 
     public void GetAdminManager(IModSharpModuleInterface<IAdminManager>? adminManager)
