@@ -71,7 +71,9 @@ public class Knockback : IKnockback
         if (weaponentity != null && weaponentity.IsValidEntity)
         {
             if (weaponentity.Slot == GearSlot.Knife)
+            {
                 weapon = "knife";
+            }
 
             else
             {
@@ -93,10 +95,7 @@ public class Knockback : IKnockback
         var pushVelocity = foward * damage * classKnockback * weaponknockback * hitgroupsKnockback * KnockbackScale *
                            DynamicKnockbackScale;
 
-        if (playerPawn.GroundEntity == null)
-        {
-            pushVelocity *= KnockbackJumpScale;
-        }
+        if (playerPawn.GroundEntity == null) pushVelocity *= KnockbackJumpScale;
 
         // _modsharp.PrintToChatAll($"KB data: {weapon} | {pushVelocity.Length():F2}");
 

@@ -28,15 +28,9 @@ public class RespawnServices : IRespawnServices
 
     public void InitRespawn(IPlayerController? client)
     {
-        if (client == null)
-        {
-            return;
-        }
+        if (client == null) return;
 
-        if (!RespawnEnabled)
-        {
-            return;
-        }
+        if (!RespawnEnabled) return;
 
         var delay = _cvarServices.CvarList["Cvar_RespawnDelay"]?.GetFloat() ?? 5.0f;
 
@@ -46,28 +40,17 @@ public class RespawnServices : IRespawnServices
 
     public void RespawnClient(IPlayerController client)
     {
-        if (!RespawnEnabled)
-        {
-            return;
-        }
+        if (!RespawnEnabled) return;
 
         var playerPawn = client.GetPlayerPawn();
 
-        if (playerPawn == null)
-        {
-            return;
-        }
+        if (playerPawn == null) return;
 
-        if (playerPawn.IsAlive)
-        {
-            return;
-        }
+        if (playerPawn.IsAlive) return;
 
         if (playerPawn.Team == CStrikeTeam.Spectator || playerPawn.Team == CStrikeTeam.UnAssigned ||
             client.Team == CStrikeTeam.Spectator || client.Team == CStrikeTeam.UnAssigned)
-        {
             return;
-        }
 
         client.Respawn();
     }

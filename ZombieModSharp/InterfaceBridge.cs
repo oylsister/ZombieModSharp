@@ -75,24 +75,19 @@ internal sealed class InterfaceBridge
 
         var patch = Path.Combine(root, "..", "csgo", "steam.inf");
 
-        if (!File.Exists(patch))
-        {
-            throw new FileNotFoundException("Could not found steam.inf");
-        }
+        if (!File.Exists(patch)) throw new FileNotFoundException("Could not found steam.inf");
 
         try
         {
             var text = File.ReadAllLines(patch, Encoding.UTF8);
 
             foreach (var line in text)
-            {
                 if (line.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
                 {
                     var pv = line.Replace(prefix, "", StringComparison.OrdinalIgnoreCase).TrimEnd();
 
                     return Version.Parse(pv);
                 }
-            }
 
             throw new InvalidDataException("Invalid steam.inf");
         }
@@ -109,12 +104,8 @@ internal sealed class InterfaceBridge
             var assembly = Assembly.GetExecutingAssembly();
 
             foreach (var attr in assembly.GetCustomAttributes<AssemblyMetadataAttribute>())
-            {
                 if (attr.Key.Equals("BuildTime", StringComparison.OrdinalIgnoreCase) && attr.Value is not null)
-                {
                     return DateTime.Parse(attr.Value);
-                }
-            }
 
             throw new TypeAccessException("Could not found BuildTime In [AssemblyMetadata]");
         }

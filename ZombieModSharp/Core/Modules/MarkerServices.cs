@@ -18,7 +18,7 @@ public class MarkerServices : IMarkerServices
         "particles/leader_a_1.vpcf",
         "particles/leader_b_1.vpcf",
         "particles/leader_c_1.vpcf",
-        "particles/leader_d_1.vpcf",
+        "particles/leader_d_1.vpcf"
     };
 
     // 4 Markers at most
@@ -45,13 +45,13 @@ public class MarkerServices : IMarkerServices
             { "origin", $"{position.X} {position.Y} {position.Z}" },
             { "effect_name", effectName },
             { "start_active", 1 },
-            { "targetname", $"marker_{System.Guid.NewGuid()}" }
+            { "targetname", $"marker_{Guid.NewGuid()}" }
         };
 
         if (_entityManager.SpawnEntitySync<IBaseEntity>("info_particle_system", kv) is not { } particle)
             return false;
 
-        _transmitManager.AddEntityHooks(particle, defaultTransmit: true);
+        _transmitManager.AddEntityHooks(particle, true);
 
         // Delete oldest marker if exceeding limit
 
@@ -97,13 +97,11 @@ public class MarkerServices : IMarkerServices
     public void CleanupAll()
     {
         foreach (var marker in _markers)
-        {
             if (marker != null && marker.IsValidEntity)
             {
                 marker.AcceptInput("Stop");
                 marker.AcceptInput("Kill");
             }
-        }
 
         _markers.Clear();
 

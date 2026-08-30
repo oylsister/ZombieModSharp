@@ -35,10 +35,7 @@ public class GlowServices : IGlowServices
     {
         var controllerIndex = target.ControllerIndex;
 
-        if (_glowingEntities.ContainsKey(controllerIndex))
-        {
-            return false;
-        }
+        if (_glowingEntities.ContainsKey(controllerIndex)) return false;
 
         var model = GetModelNameSafe(pawn);
         if (string.IsNullOrEmpty(model))
@@ -106,7 +103,6 @@ public class GlowServices : IGlowServices
             case IGlowServices.GlowVisibleMode.SameTeam:
                 var team = pawn.GetControllerAuto()?.Team;
                 if (team.HasValue)
-                {
                     foreach (var cCtrl in players)
                     {
                         if (cCtrl == null || !cCtrl.IsValid()) continue;
@@ -119,7 +115,6 @@ public class GlowServices : IGlowServices
                             transmitMgr.SetEntityState(glow.Index, gc.ControllerIndex, true, -1);
                         }
                     }
-                }
 
                 break;
 
@@ -149,18 +144,13 @@ public class GlowServices : IGlowServices
 
         var controllerIndex = controller.Index;
 
-        if (!_glowingEntities.ContainsKey(controllerIndex))
-        {
-            return;
-        }
+        if (!_glowingEntities.ContainsKey(controllerIndex)) return;
 
         if (_glowingEntities.TryGetValue(controllerIndex, out var entities))
         {
             foreach (var ent in entities)
-            {
                 if (ent.IsValidEntity)
                     ent.AcceptInput("Kill");
-            }
 
             _glowingEntities.Remove(controllerIndex);
         }
@@ -169,13 +159,9 @@ public class GlowServices : IGlowServices
     public void CleanupAll()
     {
         foreach (var kv in _glowingEntities)
-        {
-            foreach (var ent in kv.Value)
-            {
-                if (ent != null && ent.IsValidEntity)
-                    ent.AcceptInput("Kill");
-            }
-        }
+        foreach (var ent in kv.Value)
+            if (ent != null && ent.IsValidEntity)
+                ent.AcceptInput("Kill");
 
         _glowingEntities.Clear();
     }

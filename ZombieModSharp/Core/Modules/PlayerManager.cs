@@ -17,15 +17,9 @@ public class PlayerManager : IPlayerManager
 
     public Player GetOrCreatePlayer(IGameClient? client)
     {
-        if (client == null)
-        {
-            throw new ArgumentNullException(nameof(client));
-        }
+        if (client == null) throw new ArgumentNullException(nameof(client));
 
-        if (_players.ContainsKey(client))
-        {
-            return _players[client];
-        }
+        if (_players.ContainsKey(client)) return _players[client];
 
         var player = new Player();
         _players.Add(client, player);
@@ -66,8 +60,15 @@ public class Player
     public ClassAttribute? ActiveClass { get; set; }
 
     // Convenience methods
-    public bool IsHuman() => !IsZombie;
-    public bool IsInfected() => IsZombie;
+    public bool IsHuman()
+    {
+        return !IsZombie;
+    }
+
+    public bool IsInfected()
+    {
+        return IsZombie;
+    }
 
     // sound section.
     public bool SoundEnabled { get; set; }

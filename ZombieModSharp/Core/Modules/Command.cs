@@ -57,9 +57,14 @@ public class Command : ICommand
         private readonly ISharedSystem _shared;
 
         public AimTargetResolver(ISharedSystem shared)
-            => _shared = shared;
+        {
+            _shared = shared;
+        }
 
-        public string GetTarget() => TargetString;
+        public string GetTarget()
+        {
+            return TargetString;
+        }
 
         public IEnumerable<IGameClient> Resolve(IGameClient? activator)
         {
@@ -68,7 +73,7 @@ public class Command : ICommand
 
             var start = pawn.GetEyePosition();
             var fwd = pawn.GetEyeAngles().AnglesToVectorForward();
-            var end = start + (fwd * 8192.0f);
+            var end = start + fwd * 8192.0f;
 
             var attr = RnQueryShapeAttr.Bullets();
             attr.SetEntityToIgnore(pawn, 0);
@@ -241,15 +246,15 @@ public class Command : ICommand
             return;
         }
 
-        byte randomByteR = (byte)Random.Shared.Next(0, 256);
-        byte randomByteG = (byte)Random.Shared.Next(0, 256);
+        var randomByteR = (byte)Random.Shared.Next(0, 256);
+        var randomByteG = (byte)Random.Shared.Next(0, 256);
 
         _glowServices.CreateGlow(
             target,
             pawn,
             new Color32(randomByteR, randomByteG, 0, 255),
             0,
-            IGlowServices.GlowVisibleMode.ExceptTarget
+            GlowVisibleMode.ExceptTarget
         );
 
         ReplyToCommand(client, $"{controller.PlayerName} Glow.");
@@ -365,7 +370,7 @@ public class Command : ICommand
             var pawn = target_controller.GetPlayerPawn();
             if (pawn != null && pawn.IsValid())
             {
-                var mode = IGlowServices.GlowVisibleMode.ExceptTarget;
+                var mode = GlowVisibleMode.ExceptTarget;
                 _glowServices.CreateGlow(
                     target_controller.GetGameClient()!,
                     pawn,
@@ -544,10 +549,8 @@ public class Command : ICommand
 
             // we need to check if arg is number or not.
             if (!int.TryParse(arg, out volume))
-            {
                 // we just keep the same value.
                 volume = player.SoundVolume;
-            }
 
             if (volume < 0 || volume > 100)
             {
@@ -561,9 +564,9 @@ public class Command : ICommand
         var preferences = _sharedSystem.GetSharpModuleManager()
             .GetRequiredSharpModuleInterface<IClientPreference>(IClientPreference.Identity)
             .Instance!;
-        preferences.SetCookie(client.SteamId, global::ZombieModSharp.ZombieModSharp.SoundEnabledCookieKey,
+        preferences.SetCookie(client.SteamId, ZombieModSharp.SoundEnabledCookieKey,
             player.SoundEnabled.ToString());
-        preferences.SetCookie(client.SteamId, global::ZombieModSharp.ZombieModSharp.SoundVolumeCookieKey,
+        preferences.SetCookie(client.SteamId, ZombieModSharp.SoundVolumeCookieKey,
             player.SoundVolume.ToString());
         ReplyToCommand(client,
             $"You have{(player.SoundEnabled ? "\x05 Enabled" : "\x07 Disabled")}\x01 zombie sound. {(player.SoundEnabled ? $"And set volume to\x06 {player.SoundVolume}" : string.Empty)}");
@@ -863,10 +866,7 @@ public class Command : ICommand
 
     private List<IGameClient> GetTargets(IGameClient? sender, string target)
     {
-        if (_targetingManager != null)
-        {
-            return _targetingManager.GetByTarget(sender, target).ToList();
-        }
+        if (_targetingManager != null) return _targetingManager.GetByTarget(sender, target).ToList();
 
         // fallback: 沒有 TargetingManager 時，直接回傳空集合
         return new List<IGameClient>();

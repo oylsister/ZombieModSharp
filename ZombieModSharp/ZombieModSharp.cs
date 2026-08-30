@@ -47,7 +47,7 @@ public sealed class ZombieModSharp : IModSharpModule
     private readonly IPlayerManager _playerManager;
 
     private bool _registered = false;
-    
+
     private IDisposable? _clientPreferenceLoadSubscription;
     private ITargetingManager? _targetingManager;
 
@@ -108,8 +108,6 @@ public sealed class ZombieModSharp : IModSharpModule
         _leaderServices = _serviceProvider.GetRequiredService<ILeaderServices>();
         _playerClasses = _serviceProvider.GetRequiredService<IPlayerClasses>();
         _playerManager = _serviceProvider.GetRequiredService<IPlayerManager>();
-
-
     }
 
     public bool Init()
@@ -231,20 +229,14 @@ public sealed class ZombieModSharp : IModSharpModule
 
     private void TryResolveAdminManager(bool logFailure = false)
     {
-        if (_adminManager?.Instance is not null)
-        {
-            return;
-        }
+        if (_adminManager?.Instance is not null) return;
 
         _adminManager = _sharedSystem.GetSharpModuleManager()
             .GetOptionalSharpModuleInterface<IAdminManager>(IAdminManager.Identity);
 
         if (_adminManager?.Instance is null)
         {
-            if (logFailure)
-            {
-                _logger.LogWarning("AdminManager is not installed. Admin commands will not work.");
-            }
+            if (logFailure) _logger.LogWarning("AdminManager is not installed. Admin commands will not work.");
 
             return;
         }
@@ -252,26 +244,26 @@ public sealed class ZombieModSharp : IModSharpModule
         _command.GetAdminManager(_adminManager);
         _command.RegisterAdminCommand();
     }
+
     private T? GetExternalModule<T>(string identity) where T : class
-        => _sharedSystem.GetSharpModuleManager()
+    {
+        return _sharedSystem.GetSharpModuleManager()
             .GetOptionalSharpModuleInterface<T>(identity)
             ?.Instance;
+    }
+
     private void TryResolveTargetingManager(bool logFailure = false)
     {
-        if (_targetingManager is not null)
-        {
-            return;
-        }
+        if (_targetingManager is not null) return;
 
         _targetingManager = GetExternalModule<ITargetingManager>(ITargetingManager.Identity);
 
         if (_targetingManager is null)
         {
             if (logFailure)
-            {
-                _logger.LogWarning("Failed to get TargetingManager. Do you have '{AssemblyName}' installed? Target selectors will be limited.",
+                _logger.LogWarning(
+                    "Failed to get TargetingManager. Do you have '{AssemblyName}' installed? Target selectors will be limited.",
                     TargetingManagerAssemblyName);
-            }
         }
         else
         {
@@ -280,18 +272,13 @@ public sealed class ZombieModSharp : IModSharpModule
                 .GetOptionalSharpModuleInterface<ITargetingManager>(ITargetingManager.Identity));
         }
     }
+
     private void RegisterTargetResolver()
     {
-        if (_targetingManager is null || _registered)
-        {
-            return;
-        }
+        if (_targetingManager is null || _registered) return;
 
         // stop if the target string is already registered
-        if (!_targetingManager.RegisterResolver("ZombieModSharp", new AimTargetResolver(_sharedSystem)))
-        {
-            return;
-        }
+        if (!_targetingManager.RegisterResolver("ZombieModSharp", new AimTargetResolver(_sharedSystem))) return;
 
         _registered = true;
     }

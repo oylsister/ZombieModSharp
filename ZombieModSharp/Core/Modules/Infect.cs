@@ -65,10 +65,7 @@ public class Infect : IInfect
     public void InfectPlayer(IGameClient client, IGameClient? attacker = null, bool motherzombie = false,
         bool force = false)
     {
-        if (client == null)
-        {
-            return;
-        }
+        if (client == null) return;
 
         if (IsTestMode() && !force)
         {
@@ -80,15 +77,9 @@ public class Infect : IInfect
 
         var result = ZMS_OnClientInfect(client, attacker, motherzombie, force);
 
-        if (result == EHookAction.SkipCallReturnOverride)
-        {
-            return;
-        }
+        if (result == EHookAction.SkipCallReturnOverride) return;
 
-        if (!InfectStarted)
-        {
-            InfectStarted = true;
-        }
+        if (!InfectStarted) InfectStarted = true;
 
         var zmPlayer = _player.GetOrCreatePlayer(client);
         zmPlayer.IsZombie = true;
@@ -101,10 +92,7 @@ public class Infect : IInfect
             return;
         }
 
-        if (_leaderServices.IsClientLeader(clientController))
-        {
-            _glowServices.DisablePlayerGlow(clientController);
-        }
+        if (_leaderServices.IsClientLeader(clientController)) _glowServices.DisablePlayerGlow(clientController);
 
         clientController.SwitchTeam(CStrikeTeam.TE);
 
@@ -174,10 +162,7 @@ public class Infect : IInfect
         */
         var item = pawn.GetWeaponBySlot(GearSlot.Pistol);
 
-        if (item != null && !string.IsNullOrEmpty(item.HammerId))
-        {
-            pawn.DropWeapon(item);
-        }
+        if (item != null && !string.IsNullOrEmpty(item.HammerId)) pawn.DropWeapon(item);
 
         pawn.RemoveAllItems();
         pawn.GiveNamedItem(EconItemId.KnifeTe);
@@ -207,10 +192,7 @@ public class Infect : IInfect
         // Fire fake event here.
         var fakeEvent = _eventManager.CreateEvent("player_death", true);
 
-        if (fakeEvent == null)
-        {
-            return;
-        }
+        if (fakeEvent == null) return;
 
         try
         {
@@ -245,17 +227,11 @@ public class Infect : IInfect
 
     public void HumanizeClient(IGameClient client, bool force = false)
     {
-        if (client == null)
-        {
-            return;
-        }
+        if (client == null) return;
 
         var result = ZMS_OnClientHumanize(client, force);
 
-        if (result == EHookAction.SkipCallReturnOverride)
-        {
-            return;
-        }
+        if (result == EHookAction.SkipCallReturnOverride) return;
 
         var zmPlayer = _player.GetOrCreatePlayer(client);
         zmPlayer.IsZombie = false;
@@ -311,10 +287,7 @@ public class Infect : IInfect
             zmPlayer.TotalInfect = 0;
 
             var controller = client.GetPlayerController();
-            if (controller == null)
-            {
-                continue;
-            }
+            if (controller == null) continue;
 
             if (controller.Team == CStrikeTeam.Spectator || controller.Team == CStrikeTeam.UnAssigned)
                 continue;
@@ -333,9 +306,7 @@ public class Infect : IInfect
     {
         if (_modSharp.GetGameRules().IsWarmupPeriod &&
             (!_cvarServices.CvarList["Cvar_InfectWarmupEnabled"]?.GetBool() ?? false))
-        {
             return;
-        }
 
         // start countdown.
         InitialCountDown();
@@ -380,17 +351,15 @@ public class Infect : IInfect
         if (topDefender.Count > 0)
         {
             _modSharp.PrintToChatAll($" \x0C+++++++++++++++++ \x04[TOP DEFENDER] \x0C+++++++++++++++++");
-            for (int i = 0; i < topDefender.Count; i++)
+            for (var i = 0; i < topDefender.Count; i++)
             {
                 _modSharp.PrintToChatAll(
                     $" \x06{i + 1}. {topDefender[i].Key.Name} - \x07{topDefender[i].Value.TotalDamage} DMG");
 
                 // we give them reward based on next round.
                 if (i < 2)
-                {
                     // extra grenade.
                     allPlayers[topDefender[i].Key].AllowExtraGrenade = true;
-                }
 
                 allPlayers[topDefender[i].Key].MotherZombieImmune = true;
             }
@@ -400,32 +369,24 @@ public class Infect : IInfect
         {
             // infector side
             _modSharp.PrintToChatAll($" \x10+++++++++++++++++ \x07[TOP INFECTOR] \x10+++++++++++++++++");
-            for (int i = 0; i < topInfect.Count; i++)
-            {
+            for (var i = 0; i < topInfect.Count; i++)
                 _modSharp.PrintToChatAll(
                     $" \x09{i + 1}. {topInfect[i].Key.Name} - \x07{topInfect[i].Value.TotalInfect} Infected");
-            }
         }
     }
 
     public void CheckGameStatus()
     {
         // if CT count is 0, end the round.
-        if (!InfectStarted)
-        {
-            return;
-        }
+        if (!InfectStarted) return;
 
-        if (IsTestMode())
-        {
-            return;
-        }
+        if (IsTestMode()) return;
 
         var allClient = _entityManager.GetPlayerControllers(true);
 
-        int ctCount = 0;
-        int tCount = 0;
-        int possibleZombieCount = 0;
+        var ctCount = 0;
+        var tCount = 0;
+        var possibleZombieCount = 0;
 
         foreach (var client in allClient)
         {
@@ -452,7 +413,7 @@ public class Infect : IInfect
         // regardless of the possible game end, we modify knockback here.
         // Scale linearly from 1.0 (no zombies) up to 1.35 at 45+ zombies (out of 64 max players).
         float maxZombiesForScale = _cvarServices.CvarList["Cvar_InfectKnockbackDynamicScaleMaxZombie"]?.GetInt32() ?? 1;
-        float maxKnockbackScale = _cvarServices.CvarList["Cvar_InfectKnockbackDynamicScale"]?.GetFloat() ?? 1.0f;
+        var maxKnockbackScale = _cvarServices.CvarList["Cvar_InfectKnockbackDynamicScale"]?.GetFloat() ?? 1.0f;
 
         if (maxKnockbackScale > 1.0f)
         {
@@ -475,13 +436,10 @@ public class Infect : IInfect
                 {
                     var pawn = client.GetPlayerPawn();
 
-                    if (pawn == null)
-                    {
-                        continue;
-                    }
+                    if (pawn == null) continue;
 
                     _particleManager.DispatchParticleEffect(zombieOverlay, ParticleAttachmentType.MainView, pawn, 0,
-                        true, new(client));
+                        true, new RecipientFilter(client));
                 }
 
                 ;
@@ -502,13 +460,10 @@ public class Infect : IInfect
                 {
                     var pawn = client.GetPlayerPawn();
 
-                    if (pawn == null)
-                    {
-                        continue;
-                    }
+                    if (pawn == null) continue;
 
                     _particleManager.DispatchParticleEffect(humanOverlay, ParticleAttachmentType.MainView, pawn, 0,
-                        true, new(client));
+                        true, new RecipientFilter(client));
                 }
 
                 ;
@@ -592,20 +547,19 @@ public class Infect : IInfect
 
         // 63 / 7 = 9 zombies
         var ratio = _cvarServices.CvarList["Cvar_InfectMotherZombieRatio"]?.GetFloat() ?? 7.0f;
-        int requireZm = (int)Math.Round(totalPlayer / ratio);
+        var requireZm = (int)Math.Round(totalPlayer / ratio);
 
         // if zombie is less than 0 then make one.
         if (requireZm <= 0)
             requireZm = _cvarServices.CvarList["Cvar_InfectMinimumZombie"]?.GetInt32() ?? 1;
 
-        int made = 0;
+        var made = 0;
 
         // this part is mother zombie reset, if candidate is less than zombie requirement.
         if (requireZm > candidate.Count())
         {
             // if any candidate left here.
             if (candidate.Any())
-            {
                 // we made them motherzombie right the way.
                 foreach (var player in candidate)
                 {
@@ -621,14 +575,11 @@ public class Infect : IInfect
                     // chosen for this round.
                     player.Value.MotherZombieStatus = MotherZombieStatus.Chosen;
                 }
-            }
 
             // at the end of the round chosen mother zombie will get reset to Last. so we reset it.
             foreach (var player in _player.GetAllPlayers()
                          .Where(p => p.Value.MotherZombieStatus == MotherZombieStatus.Last))
-            {
                 player.Value.MotherZombieStatus = MotherZombieStatus.None;
-            }
 
             // getting candidate again.
             candidate = _player.GetAllPlayers().Where(p => p.Value.MotherZombieStatus == MotherZombieStatus.None

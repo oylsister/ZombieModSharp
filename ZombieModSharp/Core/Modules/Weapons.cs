@@ -101,10 +101,8 @@ public class Weapons : IWeapons
                 continue;
 
             foreach (var command in weapon.Value.Command)
-            {
                 _commandManager.RegisterClientCommand(command, OnPurchaseWeaponCommand);
-                //_logger.LogInformation("Assigned Command {command}", command);
-            }
+            //_logger.LogInformation("Assigned Command {command}", command);
         }
     }
 
@@ -134,10 +132,7 @@ public class Weapons : IWeapons
             return;
         }
 
-        if (pawn == null || controller == null)
-        {
-            return;
-        }
+        if (pawn == null || controller == null) return;
 
         if (pawn.Team <= CStrikeTeam.Spectator)
         {
@@ -165,7 +160,6 @@ public class Weapons : IWeapons
         }
 
         if (weapon.MaxPurchase > 0)
-        {
             if (player.PurchaseHistory.TryGetValue(weapon.WeaponName, out var weaponData) &&
                 weaponData >= weapon.MaxPurchase)
             {
@@ -173,7 +167,6 @@ public class Weapons : IWeapons
                     $"Your purchase of weapon \x05{weapon.WeaponName}\x01 has reached maximum number that allow this round.");
                 return;
             }
-        }
 
         var money = controller.GetInGameMoneyService()?.Account;
 
@@ -281,10 +274,8 @@ public class Weapons : IWeapons
     public float GetWeaponKnockback(string weaponentity)
     {
         if (!weaponDatas.TryGetValue(weaponentity, out var weaponData))
-        {
             // _modsharp.PrintToChatAll($"No weapons name {weaponentity}");
             return 1.0f;
-        }
 
         // _modsharp.PrintToChatAll($"Found {weaponData.EntityName} and KB: {weaponData.Knockback}");
         return weaponData.Knockback;
@@ -378,13 +369,11 @@ public class Weapons : IWeapons
         var length = Math.Min(ammo.Size, ammoBefore.Length);
 
         for (var i = 0; i < length; i++)
-        {
             if (ammo[i] > ammoBefore[i])
             {
                 _grenadeAmmoIndexes[entityName] = i;
                 return;
             }
-        }
     }
 
     private int GetVisibleGrenadeStack(IPlayerPawn pawn, string entityName)

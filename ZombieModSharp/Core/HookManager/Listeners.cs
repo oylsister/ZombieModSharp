@@ -121,10 +121,7 @@ public class Listeners : IListeners, IClientListener, IGameListener, IEntityList
         // get map name
         var mapname = _modsharp.GetMapName();
 
-        if (!string.IsNullOrEmpty(mapname))
-        {
-            _modsharp.ServerCommand($"exec zombiemodsharp/{mapname}.cfg");
-        }
+        if (!string.IsNullOrEmpty(mapname)) _modsharp.ServerCommand($"exec zombiemodsharp/{mapname}.cfg");
     }
 
     public void OnRoundRestarted()
@@ -148,8 +145,8 @@ public class Listeners : IListeners, IClientListener, IGameListener, IEntityList
                 var client = controller.GetGameClient();
                 if (client == null || !client.IsValid) continue;
 
-                byte randomByteR = (byte)Random.Shared.Next(0, 256);
-                byte randomByteG = (byte)Random.Shared.Next(0, 256);
+                var randomByteR = (byte)Random.Shared.Next(0, 256);
+                var randomByteG = (byte)Random.Shared.Next(0, 256);
 
                 _glowServices.CreateGlow(
                     client,
@@ -169,10 +166,8 @@ public class Listeners : IListeners, IClientListener, IGameListener, IEntityList
         var allowJoinLate = _cvarServices.CvarList["Cvar_RespawnLateJoin"]?.GetBool() ?? false;
 
         if (team == CStrikeTeam.TE || team == CStrikeTeam.CT)
-        {
             if (allowJoinLate)
                 _respawnServices.InitRespawn(client.GetPlayerController());
-        }
 
         return ECommandAction.Skipped;
     }
@@ -250,10 +245,7 @@ public class Listeners : IListeners, IClientListener, IGameListener, IEntityList
     {
         if (entity.Classname.Contains("weapon_"))
         {
-            if (entity.AsBaseWeapon() is not { } weapon)
-            {
-                return;
-            }
+            if (entity.AsBaseWeapon() is not { } weapon) return;
 
             var name = weapon?.GetItemDefinitionName();
 
@@ -281,21 +273,14 @@ public class Listeners : IListeners, IClientListener, IGameListener, IEntityList
             }
         }
 
-        if (entity.Classname.Contains("_projectile"))
-        {
-            entity.SetCollisionGroup(CollisionGroupType.Debris);
-        }
+        if (entity.Classname.Contains("_projectile")) entity.SetCollisionGroup(CollisionGroupType.Debris);
 
         if (entity.Classname.Contains("smokegrenade_projectile") || entity.Classname.Contains("decoy_projectile"))
-        {
             _modsharp.PushTimer(() => { _grenadeEffect.ApplyFreeze(entity, 600, 3f); }, 1.3f,
                 GameTimerFlags.StopOnMapEnd);
-        }
 
         if (entity.Classname.Contains("flashbang_projectile"))
-        {
             _modsharp.PushTimer(() => { _grenadeEffect.ApplyLightGrenade(entity, 15f); }, 1.3f,
                 GameTimerFlags.StopOnMapEnd);
-        }
     }
 }

@@ -54,9 +54,6 @@ public class PrecacheManager : IPrecacheManager
             return;
         }
 
-        foreach (var resource in _precacheList)
-        {
-            _modsharp.PrecacheResource(resource);
-        }
+        foreach (var resource in _precacheList) _modsharp.PrecacheResource(resource);
     }
 }

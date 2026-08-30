@@ -83,15 +83,9 @@ public class Events : IEvents
         var attackerClient = e.GetPlayerController("attacker")?.GetGameClient();
         var weapon = e.GetString("weapon");
 
-        if (client == null || attackerClient == null)
-        {
-            return;
-        }
+        if (client == null || attackerClient == null) return;
 
-        if (_infect.IsInfectStarted() == false)
-        {
-            return;
-        }
+        if (_infect.IsInfectStarted() == false) return;
 
         var zmClient = _playerManager.GetOrCreatePlayer(client);
         var zmAttacker = _playerManager.GetOrCreatePlayer(attackerClient);
@@ -100,16 +94,11 @@ public class Events : IEvents
 
         if (zmClient.IsHuman() && zmAttacker.IsInfected())
         {
-            if (_infect.IsTestMode())
-            {
-                return;
-            }
+            if (_infect.IsTestMode()) return;
 
             if (weapon.Contains("knife"))
-            {
                 // Infect the player.
                 _infect.InfectPlayer(client, attackerClient);
-            }
         }
         else if (zmClient.IsInfected() && zmAttacker.IsHuman())
         {
@@ -126,9 +115,7 @@ public class Events : IEvents
                     var accountService = attackerClient.GetPlayerController()?.GetInGameMoneyService();
 
                     if (accountService != null)
-                    {
                         accountService.Account += (int)Math.Ceiling(damage * Infect.CashMultiply);
-                    }
                 }
 
                 _soundServices.ZombieHurtSound(pawn);
@@ -148,13 +135,9 @@ public class Events : IEvents
             return;
 
         if (controller != null && controller.IsValid())
-        {
             // �p�G�O Leader�A���`������ Glow
             if (_LeaderServices.IsClientLeader(controller))
-            {
                 _glowServices.DisablePlayerGlow(controller);
-            }
-        }
 
         if (_playerManager.GetOrCreatePlayer(client).IsInfected())
         {
@@ -276,10 +259,14 @@ public class Events : IEvents
                 if (!_infect.IsTestMode())
                 {
                     if (teamRespawn == 0)
+                    {
                         _infect.InfectPlayer(client);
+                    }
 
                     else if (teamRespawn == 1)
+                    {
                         _infect.HumanizeClient(client);
+                    }
 
                     else
                     {
@@ -302,10 +289,7 @@ public class Events : IEvents
             {
                 _infect.HumanizeClient(client);
 
-                if (player.AllowExtraGrenade)
-                {
-                    pawn?.GetPlayerPawn()?.GiveNamedItem(EconItemId.Hegrenade);
-                }
+                if (player.AllowExtraGrenade) pawn?.GetPlayerPawn()?.GiveNamedItem(EconItemId.Hegrenade);
             }
 
             _ztele.OnPlayerSpawn(client);
@@ -314,10 +298,7 @@ public class Events : IEvents
 
             // _modSharp.PrintToChatAll($"Noblock = {noblock}");
 
-            if (noblock)
-            {
-                pawn?.GetPlayerPawn()?.SetCollisionGroup(CollisionGroupType.Debris);
-            }
+            if (noblock) pawn?.GetPlayerPawn()?.SetCollisionGroup(CollisionGroupType.Debris);
         }, 0.05f, GameTimerFlags.None | GameTimerFlags.StopOnMapEnd | GameTimerFlags.StopOnRoundEnd);
     }
 
@@ -334,10 +315,7 @@ public class Events : IEvents
             //_modSharp.PrintToChatAll("Change");
             weapon.ReserveAmmo += 1;
 
-            if (client != null && _playerManager.GetOrCreatePlayer(client).InfiniteAmmo)
-            {
-                weapon.Clip = weapon.MaxClip;
-            }
+            if (client != null && _playerManager.GetOrCreatePlayer(client).InfiniteAmmo) weapon.Clip = weapon.MaxClip;
         }
     }
 }

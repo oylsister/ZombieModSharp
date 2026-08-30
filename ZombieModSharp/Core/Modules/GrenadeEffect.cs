@@ -41,7 +41,7 @@ public class GrenadeEffect : IGrenadeEffect
         var kv = new Dictionary<string, KeyValuesVariantValueItem>
         {
             { "effect_name", "particles/cs2fixes/napalm_fire.vpcf" },
-            { "start_active", 1 },
+            { "start_active", 1 }
         };
 
         particle = _entityManager.SpawnEntitySync<IBaseParticle>("info_particle_system", kv);
@@ -49,10 +49,8 @@ public class GrenadeEffect : IGrenadeEffect
         try
         {
             if (particle == null)
-            {
                 //_modsharp.PrintToChatAll("Is fucking null");
                 return false;
-            }
 
             particle.GetControlPointEntities()[0] = playerPawn.Handle;
             particle.DissolveStartTime = _modsharp.GetGlobals().CurTime + duration;

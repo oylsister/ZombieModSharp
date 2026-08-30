@@ -132,18 +132,18 @@ public class PlayerClasses : IPlayerClasses
                 {
                     player.ZombieClass = classValue;
                     var humanClassKey = classesData.FirstOrDefault(c => c.Value == player.HumanClass).Key;
-                    preferences.SetCookie(client.SteamId, global::ZombieModSharp.ZombieModSharp.HumanClassCookieKey,
+                    preferences.SetCookie(client.SteamId, ZombieModSharp.HumanClassCookieKey,
                         humanClassKey);
-                    preferences.SetCookie(client.SteamId, global::ZombieModSharp.ZombieModSharp.ZombieClassCookieKey,
+                    preferences.SetCookie(client.SteamId, ZombieModSharp.ZombieClassCookieKey,
                         classObject.Key);
                 }
                 else
                 {
                     player.HumanClass = classValue;
                     var zombieClassKey = classesData.FirstOrDefault(c => c.Value == player.ZombieClass).Key;
-                    preferences.SetCookie(client.SteamId, global::ZombieModSharp.ZombieModSharp.HumanClassCookieKey,
+                    preferences.SetCookie(client.SteamId, ZombieModSharp.HumanClassCookieKey,
                         classObject.Key);
-                    preferences.SetCookie(client.SteamId, global::ZombieModSharp.ZombieModSharp.ZombieClassCookieKey,
+                    preferences.SetCookie(client.SteamId, ZombieModSharp.ZombieClassCookieKey,
                         zombieClassKey);
                 }
 
@@ -166,10 +166,7 @@ public class PlayerClasses : IPlayerClasses
             return;
         }
 
-        if (!playerPawn.IsAlive)
-        {
-            return;
-        }
+        if (!playerPawn.IsAlive) return;
 
         playerPawn.Health = classAttribute.Health;
         var team = classAttribute.Team;
@@ -235,10 +232,7 @@ public class PlayerClasses : IPlayerClasses
 
     private void InitialHeathRegen(IPlayerPawn playerPawn, ClassAttribute classAttribute, Player? player)
     {
-        if (player == null)
-        {
-            return;
-        }
+        if (player == null) return;
 
         if (player.RegenerationTimer != Guid.Empty)
         {
@@ -247,13 +241,9 @@ public class PlayerClasses : IPlayerClasses
         }
 
         if (classAttribute.HealthRegen > 0 && classAttribute.HealthRegenInterval > 0)
-        {
             player.RegenerationTimer = _modSharp.PushTimer(new Func<TimerAction>(() =>
                 {
-                    if (!playerPawn.IsAlive)
-                    {
-                        return TimerAction.Stop;
-                    }
+                    if (!playerPawn.IsAlive) return TimerAction.Stop;
 
                     var currentHealth = playerPawn.Health;
                     var maxHealth = classAttribute.Health;
@@ -264,10 +254,7 @@ public class PlayerClasses : IPlayerClasses
                         var newHealth = currentHealth + classAttribute.HealthRegen;
 
                         // make sure we don't overheal the player.
-                        if (newHealth > maxHealth)
-                        {
-                            newHealth = maxHealth;
-                        }
+                        if (newHealth > maxHealth) newHealth = maxHealth;
 
                         playerPawn.Health = newHealth;
                     }
@@ -281,6 +268,5 @@ public class PlayerClasses : IPlayerClasses
                     return TimerAction.Continue;
                 }), classAttribute.HealthRegenInterval,
                 GameTimerFlags.Repeatable | GameTimerFlags.StopOnRoundEnd | GameTimerFlags.StopOnMapEnd);
-        }
     }
 }

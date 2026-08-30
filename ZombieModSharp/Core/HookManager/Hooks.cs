@@ -67,9 +67,7 @@ public class Hooks : IHooks
         var player = _playerManager.GetOrCreatePlayer(client);
 
         if (player.ActiveClass != null)
-        {
             return new HookReturnValue<float>(EHookAction.SkipCallReturnOverride, player.ActiveClass.Speed);
-        }
 
         return result;
     }
@@ -86,10 +84,8 @@ public class Hooks : IHooks
 
         // if player is infect and weapon is knife then ignore all of it.
         if (client.IsInfected() && weapon.IsValidEntity && weapon.Slot != GearSlot.Knife)
-        {
             //_modsharp.PrintChannelAll(HudPrintChannel.Chat, $"This is {EHookAction.SkipCallReturnOverride} and {result.ReturnValue}");
             return new HookReturnValue<bool>(EHookAction.SkipCallReturnOverride, false);
-        }
 
         //_modsharp.PrintChannelAll(HudPrintChannel.Chat, $"This is {result.Action} and {result.ReturnValue}");
         return result;
@@ -103,10 +99,7 @@ public class Hooks : IHooks
         var client = param.Controller.GetGameClient();
         var victimPawn = param.Controller.AsPlayerPawn(true);
 
-        if (attacker == null || client == null)
-        {
-            return result;
-        }
+        if (attacker == null || client == null) return result;
 
         var attackerPlayer = _playerManager.GetOrCreatePlayer(attacker);
         var victimPlayer = _playerManager.GetOrCreatePlayer(client);
@@ -123,13 +116,9 @@ public class Hooks : IHooks
             var inflictor = _entityManager.FindEntityByHandle(param.InflictorHandle);
             //_modsharp.PrintToChatAll($"Inflictor: {inflictor?.Classname} | Attacker: {attacker.Name} | Victim: {client.Name} | Owner: {inflictor?.OwnerEntity?.AsPlayerPawn()?.GetController()?.PlayerName}");
             if (inflictor?.Classname.Contains("inferno") ?? false)
-            {
                 if (attacker == client)
-                {
                     //_modsharp.PrintToChatAll($"Prevent self ignite for player {client.Name}");
                     return new HookReturnValue<long>(EHookAction.SkipCallReturnOverride, 0);
-                }
-            }
         }
 
         if (attackerPlayer.IsHuman() && victimPlayer.IsInfected())
@@ -138,26 +127,19 @@ public class Hooks : IHooks
             // _modsharp.PrintToChatAll($"Player {client.Name} has been tased by {inflictor?.Classname}");
             var activeWeapon = attacker.GetPlayerController()?.GetPlayerPawn()?.GetActiveWeapon();
 
-            if (attackerPlayer.PowerKnifeActive && (activeWeapon?.Slot == GearSlot.Knife))
-            {
+            if (attackerPlayer.PowerKnifeActive && activeWeapon?.Slot == GearSlot.Knife)
                 param.Damage = _cvarServices.CvarList["Cvar_ZKnifeDamage"]?.GetInt32() ?? 20000;
-            }
 
             if (inflictor?.Classname.Contains("hegrenade") ?? false)
             {
                 var duration = victimPlayer.ActiveClass?.NapalmDuration ?? 0.0f;
 
-                if (duration > 0.0f)
-                {
-                    _grenadeEffect.IgnitePawn(param.Pawn, (int)param.Damage, duration);
-                }
+                if (duration > 0.0f) _grenadeEffect.IgnitePawn(param.Pawn, (int)param.Damage, duration);
             }
 
             if (activeWeapon?.Classname.Contains("taser") ?? false)
-            {
                 // _modsharp.PrintToChatAll($"Player {client.Name} has been tased by {attacker.Name}");
                 param.Damage = 5000;
-            }
         }
 
         return result;

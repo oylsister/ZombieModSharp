@@ -112,10 +112,7 @@ public class CvarServices : ICvarServices
         _conVarManager.InstallChangeHook(CvarList["Cvar_InfectDamageCash"]!, OnConVarChange);
         _conVarManager.InstallChangeHook(CvarList["Cvar_GrenadeStackLimit"]!, OnConVarChange);
         var ShakeHead = _conVarManager.FindConVar("mp_flinch_punch_scale", true);
-        if (ShakeHead != null)
-        {
-            ShakeHead.Set(0);
-        }
+        if (ShakeHead != null) ShakeHead.Set(0);
 
         AutoExecConfigFile();
         ApplyGrenadeStackLimit();
@@ -154,15 +151,9 @@ public class CvarServices : ICvarServices
             RespawnServices.SetRespawnEnable(enabled);
         }
 
-        if (convar.Name == "zms_infect_damage_cash")
-        {
-            Infect.CashMultiply = convar.GetFloat();
-        }
+        if (convar.Name == "zms_infect_damage_cash") Infect.CashMultiply = convar.GetFloat();
 
-        if (convar.Name == "zms_grenade_stack_limit")
-        {
-            ApplyGrenadeStackLimit();
-        }
+        if (convar.Name == "zms_grenade_stack_limit") ApplyGrenadeStackLimit();
     }
 
     private void ApplyGrenadeStackLimit()
@@ -190,14 +181,12 @@ public class CvarServices : ICvarServices
         var configFile = Path.Combine(configPath, "zombiemodsharp.cfg");
 
         if (!File.Exists(configFile))
-        {
             // create new one
             _modsharp.InvokeFrameActionAsync(async () =>
             {
                 await CreateNewConfigFileAsync(configFile);
                 _modsharp.ServerCommand($"exec zombiemodsharp/zombiemodsharp.cfg");
             });
-        }
 
         else
             _modsharp.ServerCommand($"exec zombiemodsharp/zombiemodsharp.cfg");

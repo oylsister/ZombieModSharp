@@ -90,7 +90,7 @@ public class LeaderServices : ILeaderServices
 
         // if vote count reaches threshold, assign leader
         var allPlayer = _playerManager.GetAllPlayers();
-        int requiredVotes = allPlayer.Count / 8;
+        var requiredVotes = allPlayer.Count / 8;
 
         if (requiredVotes == 0)
             requiredVotes = 1;
@@ -184,12 +184,8 @@ public class LeaderServices : ILeaderServices
         var refreshed = new List<IPlayerController>();
 
         foreach (var controller in sharedSystem.GetEntityManager().FindPlayerControllers())
-        {
             if (controller != null && controller.IsValid() && _leaders.Contains(controller))
-            {
                 refreshed.Add(controller);
-            }
-        }
 
         _leaders.Clear();
         _leaders.AddRange(refreshed);
