@@ -7,6 +7,7 @@ using Sharp.Extensions.GameEventManager;
 using Sharp.Modules.AdminManager.Shared;
 using Sharp.Modules.ClientPreferences.Shared;
 using Sharp.Modules.MenuManager.Shared;
+using Sharp.Modules.TargetingManager.Shared;
 using Sharp.Shared;
 using Sharp.Shared.Abstractions;
 using Sharp.Shared.Managers;
@@ -24,6 +25,7 @@ public sealed class ZombieModSharp : IModSharpModule
 
     private IModSharpModuleInterface<IAdminManager>? _adminManager;
     private IModSharpModuleInterface<IMenuManager>? _menuManager;
+   
 
     private readonly ILogger<ZombieModSharp> _logger;
 
@@ -41,13 +43,12 @@ public sealed class ZombieModSharp : IModSharpModule
     private readonly ISharpModuleManager _modules;
     private readonly IPlayerClasses _playerClasses;
     private readonly IPlayerManager _playerManager;
-<<<<<<< HEAD
 
+    private ITargetingManager? _targetingManager;
     private bool _registered = false;
 
-=======
     private IModSharpModuleInterface<IClientPreference>? _clientPreference;
->>>>>>> parent of 1e24605 (complete)
+
     private IDisposable? _clientPreferenceLoadSubscription;
 
     public static string Prefix { get; } = " \x04[Z:MS]\x01";
@@ -56,6 +57,8 @@ public sealed class ZombieModSharp : IModSharpModule
     internal const string SoundEnabledCookieKey = "ZombieModSharp.SoundEnabled";
     internal const string SoundVolumeCookieKey = "ZombieModSharp.SoundVolume";
     private const string AdminManagerAssemblyName = "Sharp.Modules.AdminManager";
+
+    private const string TargetingManagerAssemblyName = "Sharp.Modules.TargetingManager";
 
     public ZombieModSharp(ISharedSystem sharedSystem,
         string dllPath,
@@ -235,6 +238,7 @@ public sealed class ZombieModSharp : IModSharpModule
         _command.RegisterAdminCommand();
     }
 
+
     private T? GetExternalModule<T>(string identity) where T : class
     {
         return _sharedSystem.GetSharpModuleManager()
@@ -244,16 +248,20 @@ public sealed class ZombieModSharp : IModSharpModule
 
     private void TryResolveTargetingManager(bool logFailure = false)
     {
-        if (_targetingManager is not null) return;
+        if (_targetingManager is not null)
+        {
+            return;
+        }
 
         _targetingManager = GetExternalModule<ITargetingManager>(ITargetingManager.Identity);
 
         if (_targetingManager is null)
         {
             if (logFailure)
-                _logger.LogWarning(
-                    "Failed to get TargetingManager. Do you have '{AssemblyName}' installed? Target selectors will be limited.",
+            {
+                _logger.LogWarning("Failed to get TargetingManager. Do you have '{AssemblyName}' installed? Target selectors will be limited.",
                     TargetingManagerAssemblyName);
+            }
         }
         else
         {

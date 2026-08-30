@@ -73,7 +73,6 @@ public class Command : ICommand
         _command.RegisterClientCommand("vl", VoteLeaderCommand);
         _command.RegisterClientCommand("kev", KevlarCommand);
         _command.RegisterClientCommand("kevlar", KevlarCommand);
-
         _command.RegisterClientCommand("zspawn", ZSpawnCommand);
         _command.RegisterClientCommand("zammo", InfiniteAmmoCommand);
         _command.RegisterClientCommand("zknife", PowerKnifeCommand);
