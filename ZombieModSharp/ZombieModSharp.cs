@@ -116,9 +116,6 @@ public sealed class ZombieModSharp : IModSharpModule
         // we need this for command extensions.
         _serviceProvider.LoadAllSharpExtensions();
 
-        _logger.LogInformation(
-            "Oh wow, we seem to be crossing paths a lot lately... Where could I have seen you before? Can you figure it out?");
-
         _listeners.Init();
         _eventListener.Init();
         _hooks.Init();
@@ -141,6 +138,7 @@ public sealed class ZombieModSharp : IModSharpModule
         _hooks.Shutdown();
         _clientPreferenceLoadSubscription?.Dispose();
         _cvarServices.Shutdown();
+        _registered = false;
     }
 
     public void PostInit()
@@ -155,6 +153,7 @@ public sealed class ZombieModSharp : IModSharpModule
     public void OnAllModulesLoaded()
     {
         TryResolveAdminManager();
+        TryResolveTargetingManager();
         _menuManager = _sharedSystem.GetSharpModuleManager()
             .GetOptionalSharpModuleInterface<IMenuManager>(IMenuManager.Identity);
         _playerClasses.GetMenuManager(_menuManager);
@@ -214,10 +213,23 @@ public sealed class ZombieModSharp : IModSharpModule
         {
             TryResolveAdminManager(true);
         }
+        if (name.Equals(TargetingManagerAssemblyName, StringComparison.OrdinalIgnoreCase))
+        {
+            TryResolveTargetingManager(true);
+        }
     }
 
     public void OnLibraryDisconnect(string name)
     {
+        if (name.Equals(AdminManagerAssemblyName, StringComparison.OrdinalIgnoreCase))
+        {
+            _adminManager = null;
+        }
+        if (name.Equals(TargetingManagerAssemblyName, StringComparison.OrdinalIgnoreCase))
+        {
+            _targetingManager = null;
+            _registered = false;
+        }
     }
 
     private void TryResolveAdminManager(bool logFailure = false)
