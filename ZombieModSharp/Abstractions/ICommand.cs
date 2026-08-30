@@ -1,5 +1,4 @@
 using Sharp.Modules.AdminManager.Shared;
-using Sharp.Modules.TargetingManager.Shared;
 using Sharp.Shared;
 using Sharp.Shared.Objects;
 
@@ -11,6 +10,4 @@ public interface ICommand
     public void RegisterAdminCommand();
     public void ReplyToCommand(IGameClient client, string text);
     void GetAdminManager(IModSharpModuleInterface<IAdminManager>? adminManager);
-
-    void GetTargetManager(IModSharpModuleInterface<ITargetingManager>? targetingManager);
 }
