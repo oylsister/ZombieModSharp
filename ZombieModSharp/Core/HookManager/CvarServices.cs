@@ -31,7 +31,7 @@ public class CvarServices : ICvarServices
     public void Init()
     {
         var messagefix = _sharedSystem.GetConVarManager().FindConVar("sv_recvbuf_messages", true);
-        messagefix.Set(256);
+        messagefix.Set(1024);
 
         // we create convar 
         CvarList["Cvar_HumanDefault"] = _conVarManager.CreateConVar("zms_human_class_default", "human_default", "Default human class when player join", ConVarFlags.Release);
