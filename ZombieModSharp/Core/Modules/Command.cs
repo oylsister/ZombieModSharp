@@ -17,7 +17,7 @@ namespace ZombieModSharp.Core.Modules;
 
 public class Command : ICommand
 {
-    private ITargetingManager _targetingManager;
+    private ITargetingManager? _targetingManager;
     private readonly IPlayerManager _playerManager;
     private readonly IZTele _ztele;
     private readonly IInfect _infect;

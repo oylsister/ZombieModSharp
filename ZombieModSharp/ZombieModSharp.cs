@@ -45,7 +45,6 @@ public sealed class ZombieModSharp : IModSharpModule
     private readonly IPlayerManager _playerManager;
 
     private ITargetingManager? _targetingManager;
-    private bool _registered = false;
 
     private IModSharpModuleInterface<IClientPreference>? _clientPreference;
 
@@ -138,7 +137,6 @@ public sealed class ZombieModSharp : IModSharpModule
         _hooks.Shutdown();
         _clientPreferenceLoadSubscription?.Dispose();
         _cvarServices.Shutdown();
-        _registered = false;
     }
 
     public void PostInit()
@@ -228,7 +226,6 @@ public sealed class ZombieModSharp : IModSharpModule
         if (name.Equals(TargetingManagerAssemblyName, StringComparison.OrdinalIgnoreCase))
         {
             _targetingManager = null;
-            _registered = false;
         }
     }
 
